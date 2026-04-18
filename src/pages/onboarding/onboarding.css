@@ -1,0 +1,262 @@
+/* src/pages/onboarding/onboarding.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap');
+
+/* ─── Root ─────────────────────────────────────────────── */
+.ob-root {
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  background: #060d1f;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─── Background grid ───────────────────────────────────── */
+.ob-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+.ob-root::before {
+  content: '';
+  position: absolute;
+  top: -120px;
+  right: -100px;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245,158,11,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+.ob-root::after {
+  content: '';
+  position: absolute;
+  bottom: -80px;
+  left: -80px;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ─── Top bar ────────────────────────────────────────────── */
+.ob-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 36px;
+  position: relative;
+  z-index: 10;
+}
+.ob-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ob-logo-mark {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Sora', sans-serif;
+  font-weight: 900;
+  font-size: 16px;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(245,158,11,0.35);
+}
+.ob-logo-name {
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+.ob-skip {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.55);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.ob-skip:hover {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.85);
+}
+
+/* ─── Body ────────────────────────────────────────────────── */
+.ob-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 36px 40px;
+  position: relative;
+  z-index: 10;
+  gap: 32px;
+}
+
+/* ─── Illustration ────────────────────────────────────────── */
+.ob-illustration-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 360px;
+  animation: ob-slide-in 0.55s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+.ob-illustration-wrap[data-dir="prev"] {
+  animation-name: ob-slide-in-left;
+}
+.ob-illustration-glow {
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.ob-illustration {
+  width: 100%;
+  height: auto;
+  max-height: 260px;
+  filter: drop-shadow(0 20px 40px rgba(0,0,0,0.3));
+}
+
+/* ─── Text ────────────────────────────────────────────────── */
+.ob-text-wrap {
+  text-align: center;
+  max-width: 400px;
+  animation: ob-fade-up 0.5s ease 0.1s both;
+}
+.ob-text-wrap[data-dir="prev"] {
+  animation-name: ob-fade-up-right;
+}
+.ob-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 5px 14px;
+  border-radius: 20px;
+  border: 1px solid;
+  margin-bottom: 18px;
+}
+.ob-title {
+  font-family: 'Sora', sans-serif;
+  font-size: clamp(28px, 5vw, 38px);
+  font-weight: 900;
+  line-height: 1.12;
+  letter-spacing: -1px;
+  color: #fff;
+  margin: 0 0 16px;
+}
+.ob-desc {
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(255,255,255,0.45);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* ─── Controls ────────────────────────────────────────────── */
+.ob-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 400px;
+}
+.ob-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ob-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s cubic-bezier(0.34,1.4,0.64,1);
+}
+.ob-dot--active {
+  width: 28px;
+  box-shadow: 0 0 10px currentColor;
+}
+.ob-next {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  border: none;
+  padding: 13px 26px;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  letter-spacing: 0.01em;
+}
+.ob-next:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.4);
+}
+.ob-next-arrow {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+.ob-next:hover .ob-next-arrow {
+  transform: translateX(3px);
+}
+
+/* ─── Counter ─────────────────────────────────────────────── */
+.ob-counter {
+  position: fixed;
+  bottom: 32px;
+  right: 36px;
+  font-family: 'Sora', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.25);
+  z-index: 10;
+  letter-spacing: 0.05em;
+}
+.ob-counter-sep {
+  margin: 0 2px;
+}
+
+/* ─── Keyframes ───────────────────────────────────────────── */
+@keyframes ob-slide-in {
+  from { opacity: 0; transform: translateX(40px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes ob-slide-in-left {
+  from { opacity: 0; transform: translateX(-40px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes ob-fade-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes ob-fade-up-right {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
