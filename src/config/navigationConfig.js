@@ -43,7 +43,7 @@ export const navigationConfig = [
     section: 'Work',
     items: [
       {
-        name: 'Projects',
+        name: 'Workspace',
         path: '/projects',
         icon: 'FolderKanban',
         // Children create a collapsible nested menu

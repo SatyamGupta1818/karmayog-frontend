@@ -1,18 +1,18 @@
 /**
- * Redux Store
+ * store/index.js
+ * File: src/store/index.js
  *
- * Central store combining all slices.
- * Add new slice reducers here as the app grows.
+ * Redux store — add subscriptionReducer alongside existing slices.
  */
 
 import { configureStore } from '@reduxjs/toolkit'
-import uiReducer from './slices/uiSlice'
-// import authReducer from './slices/authSlice'  ← add future slices here
+import uiReducer           from './slices/uiSlice'
+import subscriptionReducer from './slices/subscriptionSlice'
 
-export const store = configureStore({
+const store = configureStore({
   reducer: {
-    ui: uiReducer,
-    // auth: authReducer,
+    ui:           uiReducer,
+    subscription: subscriptionReducer,
   },
 })
 
