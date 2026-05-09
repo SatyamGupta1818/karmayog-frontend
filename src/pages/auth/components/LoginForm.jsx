@@ -1,53 +1,77 @@
 /**
  * LoginForm.jsx
- * File: src/pages/auth/components/LoginForm.jsx
+ * src/pages/auth/components/LoginForm.jsx
  *
- * Step 1: Enter email → Step 2: Enter OTP (dummy: 123456)
+ * Step 1: Enter email → POST /auth/request-otp
+ * Step 2: Enter OTP  → POST /auth/verify-otp → tokens stored → onSuccess()
+ * Resend:              POST /auth/resend-otp  → fresh OTP, resets countdown
+ *
+ * Toast events:
+ *   success  → OTP sent, OTP resent, login success
+ *   error    → API failures, invalid OTP (also shown inline in OTP boxes)
+ *   warning  → account locked, OTP cooldown
  */
 
 import { useState, useRef, useEffect } from 'react'
-
-const DUMMY_OTP = '123456'
-const DUMMY_EMAILS = ['alex@karmayog.com', 'admin@example.com'] // any email works
+import authService from '../../../apis/services/auth/auth.service'
+import { toast } from '../../../components/common/Toast'
 
 export default function LoginForm({ onSuccess }) {
-  const [step, setStep] = useState('email') // 'email' | 'otp'
+  const [step, setStep] = useState('email')  // 'email' | 'otp'
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState('')        // inline error under OTP boxes
   const [countdown, setCountdown] = useState(0)
   const inputRefs = useRef([])
 
-  // Countdown for resend
+  // ── Countdown timer ───────────────────────────────────────────────────────
   useEffect(() => {
     if (countdown <= 0) return
     const t = setTimeout(() => setCountdown(c => c - 1), 1000)
     return () => clearTimeout(t)
   }, [countdown])
 
+  // ── Step 1: Request OTP ───────────────────────────────────────────────────
   const handleSendOTP = async (e) => {
     e.preventDefault()
     setError('')
+
     if (!email || !/\S+@\S+\.\S+/.test(email)) {
       setError('Please enter a valid email address.')
       return
     }
+
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1200))
-    setLoading(false)
-    setStep('otp')
-    setCountdown(30)
-    setTimeout(() => inputRefs.current[0]?.focus(), 100)
+    try {
+      await authService.requestOtp({ email })
+      setStep('otp')
+      setCountdown(30)
+      setTimeout(() => inputRefs.current[0]?.focus(), 100)
+      toast.success('OTP sent!', `A 6-digit code was sent to ${email}`)
+    } catch (err) {
+      console.log('err', err)
+      const msg = err?.message ?? 'Failed to send OTP. Please try again.'
+
+      // 400 → already sent; 401 → locked — show as warning
+      if (err?.statusCode === 400 || err?.statusCode === 401) {
+        toast.warning('Could not send OTP', msg)
+      } else {
+        toast.error('Something went wrong', msg)
+      }
+      setError(msg)
+    } finally {
+      setLoading(false)
+    }
   }
 
+  // ── OTP box interactions ──────────────────────────────────────────────────
   const handleOtpChange = (val, idx) => {
     if (!/^\d*$/.test(val)) return
     const next = [...otp]
     next[idx] = val.slice(-1)
     setOtp(next)
     if (val && idx < 5) inputRefs.current[idx + 1]?.focus()
-    // Auto-verify when all 6 filled
     if (next.join('').length === 6) handleVerify(next.join(''))
   }
 
@@ -57,28 +81,54 @@ export default function LoginForm({ onSuccess }) {
     }
   }
 
+  // ── Step 2: Verify OTP ────────────────────────────────────────────────────
   const handleVerify = async (code = otp.join('')) => {
+    if (code.length < 6) return
     setError('')
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1000))
-    setLoading(false)
-    if (code === DUMMY_OTP) {
-      onSuccess()
-    } else {
-      setError('Invalid OTP. Try 123456 for demo.')
+    try {
+      const res = await authService.verifyOtp({ email, otp: code })
+      // Tokens stored inside authService.verifyOtp
+      toast.success(
+        'Welcome back! 👋',
+        `Signed in as ${res.user?.firstName ?? email}`,
+        3000,
+      )
+      // Small delay so the user sees the success toast before navigation
+      setTimeout(() => onSuccess(res), 700)
+    } catch (err) {
+      console.log('err', err)
+      const msg = err?.message ?? 'Invalid OTP. Please try again.'
+      setError(msg)
+      toast.error('Verification failed', msg)
       setOtp(['', '', '', '', '', ''])
-      inputRefs.current[0]?.focus()
+      setTimeout(() => inputRefs.current[0]?.focus(), 50)
+    } finally {
+      setLoading(false)
     }
   }
 
+  // ── Resend OTP ────────────────────────────────────────────────────────────
   const handleResend = async () => {
     if (countdown > 0) return
-    setOtp(['', '', '', '', '', ''])
     setError('')
-    setCountdown(30)
-    inputRefs.current[0]?.focus()
+    setLoading(true)
+    try {
+      await authService.resendOtp(email)
+      setOtp(['', '', '', '', '', ''])
+      setCountdown(30)
+      setTimeout(() => inputRefs.current[0]?.focus(), 50)
+      toast.success('New OTP sent!', 'The previous code has been invalidated.', 3500)
+    } catch (err) {
+      const msg = err?.message ?? 'Could not resend OTP. Please try again.'
+      toast.error('Resend failed', msg)
+      setError(msg)
+    } finally {
+      setLoading(false)
+    }
   }
 
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="lf-root">
       {step === 'email' ? (
@@ -94,7 +144,8 @@ export default function LoginForm({ onSuccess }) {
               <div className="lf-input-wrap">
                 <span className="lf-input-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="2" y="4" width="20" height="16" rx="3"/><polyline points="2,4 12,13 22,4"/>
+                    <rect x="2" y="4" width="20" height="16" rx="3" />
+                    <polyline points="2,4 12,13 22,4" />
                   </svg>
                 </span>
                 <input
@@ -104,17 +155,20 @@ export default function LoginForm({ onSuccess }) {
                   value={email}
                   onChange={e => { setEmail(e.target.value); setError('') }}
                   autoFocus
+                  disabled={loading}
                 />
               </div>
               {error && <p className="lf-error">{error}</p>}
             </div>
 
-            <button type="submit" className={`lf-btn ${loading ? 'lf-btn--loading' : ''}`} disabled={loading}>
-              {loading ? (
-                <><span className="lf-spinner" /> Sending OTP…</>
-              ) : (
-                <>Continue <span>→</span></>
-              )}
+            <button
+              type="submit"
+              className={`lf-btn ${loading ? 'lf-btn--loading' : ''}`}
+              disabled={loading}
+            >
+              {loading
+                ? <><span className="lf-spinner" /> Sending OTP…</>
+                : <>Continue <span>→</span></>}
             </button>
           </form>
 
@@ -126,12 +180,20 @@ export default function LoginForm({ onSuccess }) {
       ) : (
         <>
           <div className="lf-header">
-            <button className="lf-back" onClick={() => { setStep('email'); setOtp(['','','','','','']); setError('') }}>
+            <button
+              className="lf-back"
+              onClick={() => {
+                setStep('email')
+                setOtp(['', '', '', '', '', ''])
+                setError('')
+              }}
+              disabled={loading}
+            >
               ← Back
             </button>
             <h2 className="lf-title">Check your inbox</h2>
             <p className="lf-sub">
-              We sent a 6-digit code to<br/>
+              We sent a 6-digit code to<br />
               <strong style={{ color: '#0a0f1e' }}>{email}</strong>
             </p>
           </div>
@@ -144,15 +206,20 @@ export default function LoginForm({ onSuccess }) {
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
-                className={`lf-otp-box ${digit ? 'lf-otp-box--filled' : ''}`}
+                className={`lf-otp-box ${digit ? 'lf-otp-box--filled' : ''} ${error ? 'lf-otp-box--error' : ''}`}
                 value={digit}
                 onChange={e => handleOtpChange(e.target.value, i)}
                 onKeyDown={e => handleOtpKeyDown(e, i)}
+                disabled={loading}
               />
             ))}
           </div>
 
-          {error && <p className="lf-error" style={{ textAlign: 'center', marginTop: 8 }}>{error}</p>}
+          {error && (
+            <p className="lf-error" style={{ textAlign: 'center', marginTop: 8 }}>
+              {error}
+            </p>
+          )}
 
           <button
             className={`lf-btn ${loading ? 'lf-btn--loading' : ''}`}
@@ -160,20 +227,26 @@ export default function LoginForm({ onSuccess }) {
             onClick={() => handleVerify()}
             style={{ marginTop: 24 }}
           >
-            {loading ? <><span className="lf-spinner" /> Verifying…</> : <>Verify & Sign In <span>→</span></>}
+            {loading
+              ? <><span className="lf-spinner" /> Verifying…</>
+              : <>Verify & Sign In <span>→</span></>}
           </button>
 
           <div className="lf-resend">
             {countdown > 0 ? (
-              <span>Resend OTP in <strong style={{ color: '#0d1b3e' }}>{countdown}s</strong></span>
+              <span>
+                Resend OTP in{' '}
+                <strong style={{ color: '#0d1b3e' }}>{countdown}s</strong>
+              </span>
             ) : (
-              <button className="lf-resend-btn" onClick={handleResend}>Resend OTP</button>
+              <button
+                className="lf-resend-btn"
+                onClick={handleResend}
+                disabled={loading}
+              >
+                Resend OTP
+              </button>
             )}
-          </div>
-
-          <div className="lf-hint" style={{ marginTop: 16 }}>
-            <span className="lf-hint-icon">💡</span>
-            Demo OTP: <strong>123456</strong>
           </div>
         </>
       )}
