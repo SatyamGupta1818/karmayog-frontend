@@ -167,16 +167,16 @@ client.interceptors.response.use(
 // ─── Hard Logout ──────────────────────────────────────────────────────────────
 //
 //  Called when the refresh token is missing or rejected.
-//  Clears storage and redirects to /auth.
+//  Clears storage and redirects to /login.
 //  Uses window.location instead of React Router to work outside component tree.
 //
 
 function handleHardLogout(): void {
     tokenStorage.clearAll();
 
-    // Avoid redirect loop if already on /auth
-    if (!window.location.pathname.startsWith('/auth')) {
-        window.location.href = '/auth';
+    // Avoid redirect loop if already on /login
+    if (!window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login';
     }
 }
 

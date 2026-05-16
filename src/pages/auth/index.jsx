@@ -9,15 +9,20 @@
  */
 
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import LoginForm    from './components/LoginForm'
 import RegisterForm from './components/RegisterForm'
 import { ToastContainer } from '../../components/common/Toast'
+import useAuth from '../../hooks/useAuth'
 import './auth.css'
 
 export default function Auth() {
   const [tab, setTab] = useState('login')  // 'login' | 'register'
   const navigate = useNavigate()
+  const location = useLocation()
+  const { completeLogin, isAuthenticated } = useAuth()
+
+  const from = location.state?.from?.pathname || '/dashboard'
 
   // After register succeeds → flip to login tab so owner can sign in via OTP
   const handleRegisterSuccess = (_res) => {
@@ -25,8 +30,13 @@ export default function Auth() {
   }
 
   // After OTP verify succeeds → go to dashboard
-  const handleLoginSuccess = (_res) => {
-    navigate('/dashboard')
+  const handleLoginSuccess = (res) => {
+    completeLogin(res)
+    navigate(from, { replace: true })
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />
   }
 
   return (

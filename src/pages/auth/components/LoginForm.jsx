@@ -13,7 +13,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react'
-import authService from '../../../apis/services/auth/auth.service'
+import authService, { getErrorMessage } from '../../../apis/services/auth/auth.service'
 import { toast } from '../../../components/common/Toast'
 
 export default function LoginForm({ onSuccess }) {
@@ -51,10 +51,11 @@ export default function LoginForm({ onSuccess }) {
       toast.success('OTP sent!', `A 6-digit code was sent to ${email}`)
     } catch (err) {
       console.log('err', err)
-      const msg = err?.message ?? 'Failed to send OTP. Please try again.'
+      const msg = getErrorMessage(err)
+      const status = err?.response?.status ?? err?.statusCode
 
       // 400 → already sent; 401 → locked — show as warning
-      if (err?.statusCode === 400 || err?.statusCode === 401) {
+      if (status === 400 || status === 401) {
         toast.warning('Could not send OTP', msg)
       } else {
         toast.error('Something went wrong', msg)
@@ -98,7 +99,7 @@ export default function LoginForm({ onSuccess }) {
       setTimeout(() => onSuccess(res), 700)
     } catch (err) {
       console.log('err', err)
-      const msg = err?.message ?? 'Invalid OTP. Please try again.'
+      const msg = getErrorMessage(err)
       setError(msg)
       toast.error('Verification failed', msg)
       setOtp(['', '', '', '', '', ''])
@@ -114,13 +115,13 @@ export default function LoginForm({ onSuccess }) {
     setError('')
     setLoading(true)
     try {
-      await authService.resendOtp(email)
+      await authService.resendOtp({ email })
       setOtp(['', '', '', '', '', ''])
       setCountdown(30)
       setTimeout(() => inputRefs.current[0]?.focus(), 50)
       toast.success('New OTP sent!', 'The previous code has been invalidated.', 3500)
     } catch (err) {
-      const msg = err?.message ?? 'Could not resend OTP. Please try again.'
+      const msg = getErrorMessage(err)
       toast.error('Resend failed', msg)
       setError(msg)
     } finally {

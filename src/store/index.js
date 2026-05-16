@@ -5,14 +5,16 @@
  * Redux store — add subscriptionReducer alongside existing slices.
  */
 
-import { configureStore } from '@reduxjs/toolkit'
-import uiReducer           from './slices/uiSlice'
-import subscriptionReducer from './slices/subscriptionSlice'
+import { configureStore } from '@reduxjs/toolkit';
+import uiReducer from './slices/uiSlice';
+import subscriptionReducer from './slices/subscriptionSlice';
+import authReducer from './slices/authSlice';
 
 const store = configureStore({
   reducer: {
-    ui:           uiReducer,
+    ui: uiReducer,
     subscription: subscriptionReducer,
+    auth: authReducer,
   },
 })
 
