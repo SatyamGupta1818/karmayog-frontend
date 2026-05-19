@@ -10,6 +10,7 @@ import { useSelector } from 'react-redux'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
 import { selectSidebarCollapsed } from '../../store/slices/uiSlice'
+import { ToastContainer } from '../common/Toast'
 
 export default function Layout() {
   const collapsed = useSelector(selectSidebarCollapsed)
@@ -32,6 +33,10 @@ export default function Layout() {
           </div>
         </main>
       </div>
+
+      {/* ── Toast Notifications ─────────────────────────── */}
+      <ToastContainer />
     </div>
   )
 }
+

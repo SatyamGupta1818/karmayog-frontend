@@ -2,9 +2,10 @@
  * AppRoutes.jsx
  *
  * Integrated Version:
- * 1. Handles Public routes (/onboarding, /login) without layout.
+ * 1. Handles Public routes (/onboarding, /login, /unauthorized) without layout.
  * 2. Handles Protected routes dynamically from routeConfig.
- * 3. Wraps protected pages in <ProtectedRoute> and <Layout>.
+ * 3. Wraps protected pages in <ProtectedRoute>, <PermissionInitializer>,
+ *    <Layout>, and <ProtectedModuleRoute>.
  */
 
 import { Suspense, lazy } from 'react'
@@ -14,14 +15,18 @@ import { routeConfig } from './routeConfig'
 // Layout & Security Components
 import Layout from '../components/layout/Layout'
 import ProtectedRoute from '../components/common/ProtectedRoute'
+import ProtectedModuleRoute from '../components/common/ProtectedModuleRoute'
+import PermissionInitializer from '../components/common/PermissionInitializer'
 import PageLoader from '../components/ui/PageLoader'
 
 // Public Pages (Lazy Loaded)
 const Onboarding = lazy(() => import('../pages/onboarding'))
 const Auth = lazy(() => import('../pages/auth'))
+const Unauthorized = lazy(() => import('../pages/unauthorized'))
 
 /**
  * Recursively renders route config entries from routeConfig.js
+ * Each route element is wrapped with ProtectedModuleRoute for permission checking.
  */
 function renderRoutes(routes) {
   return routes.map((route) => {
@@ -35,7 +40,9 @@ function renderRoutes(routes) {
               index
               element={
                 <Suspense fallback={<PageLoader />}>
-                  <Element />
+                  <ProtectedModuleRoute moduleKey={route.moduleKey}>
+                    <Element />
+                  </ProtectedModuleRoute>
                 </Suspense>
               }
             />
@@ -51,7 +58,9 @@ function renderRoutes(routes) {
         path={route.path}
         element={
           <Suspense fallback={<PageLoader />}>
-            <Element />
+            <ProtectedModuleRoute moduleKey={route.moduleKey}>
+              <Element />
+            </ProtectedModuleRoute>
           </Suspense>
         }
       />
@@ -67,17 +76,20 @@ export default function AppRoutes() {
         {/* These do NOT have the sidebar/header or auth checks */}
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/login" element={<Auth />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* ── REDIRECTS ────────────────────────────────────────────── */}
         {/* Initial landing goes to onboarding */}
         <Route path="/" element={<Navigate to="/onboarding" replace />} />
 
         {/* ── PROTECTED ROUTES ─────────────────────────────────────── */}
-        {/* These require auth and use the main App Layout */}
+        {/* These require auth, load permissions, and use the main App Layout */}
         <Route
           element={
             <ProtectedRoute>
-              <Layout />
+              <PermissionInitializer>
+                <Layout />
+              </PermissionInitializer>
             </ProtectedRoute>
           }
         >

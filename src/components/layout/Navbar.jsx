@@ -34,11 +34,37 @@ function useBreadcrumb() {
   })
 }
 
-function getUserDisplayName(user) {
-  if (!user) return 'User'
+function getUserDetails(authUser) {
+  try {
+    const storedUsers = localStorage.getItem('users');
+    let userData = storedUsers ? JSON.parse(storedUsers) : null;
 
-  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ')
-  return fullName || user.name || user.email || 'User'
+    // Handle case where 'users' might be an array
+    if (Array.isArray(userData)) {
+      // Try to find the matching user by email from useAuth, or fallback to the first user
+      userData = authUser?.email 
+        ? userData.find((u) => u.email === authUser.email) || userData[0] 
+        : userData[0];
+    }
+
+    // Safely extract firstName, lastName, and email with fallbacks
+    const firstName = userData?.firstName || authUser?.firstName || '';
+    const lastName = userData?.lastName || authUser?.lastName || '';
+    const email = userData?.email || authUser?.email || '';
+
+    const fullName = `${firstName} ${lastName}`.trim();
+
+    return {
+      displayName: fullName || 'Unknown User',
+      email: email
+    };
+  } catch (error) {
+    console.error('Error parsing user data from localStorage', error);
+    return {
+      displayName: 'Unknown User',
+      email: authUser?.email || ''
+    };
+  }
 }
 
 function getAvatarSeed(value) {
@@ -56,8 +82,8 @@ export default function Navbar() {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
 
-  const userName = getUserDisplayName(user)
-  const userEmail = user?.email ?? ''
+  // Safely grab user details
+  const { displayName: userName, email: userEmail } = getUserDetails(user)
   const avatarSeed = getAvatarSeed(userEmail || userName)
 
   useEffect(() => {

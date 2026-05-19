@@ -11,6 +11,7 @@ import {
   setCredentials,
   setUser,
 } from '../store/slices/authSlice'
+import { clearRbac } from '../store/slices/rbacSlice'
 
 export default function useAuth() {
   const dispatch = useDispatch()
@@ -36,6 +37,7 @@ export default function useAuth() {
       await authService.logout()
     } finally {
       dispatch(clearAuth())
+      dispatch(clearRbac())
     }
   }, [dispatch])
 

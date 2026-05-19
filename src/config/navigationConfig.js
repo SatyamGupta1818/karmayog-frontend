@@ -86,8 +86,8 @@ export const navigationConfig = [
         children: [
           { name: 'Role Master', path: '/administrator/role-master', icon: 'Zap' },
           { name: 'Menu Master', path: '/administrator/menu-master', icon: 'Zap' },
-          { name: 'Settings', path: '/administrator/settings', icon: 'BookOpen' },
-          // { name: 'Tasks', path: '/projects/tasks', icon: 'CheckSquare' },
+          { name: 'Permission Master', path: '/administrator/permission-master', icon: 'Key' },
+          { name: 'Settings', path: '/administrator/settings', icon: 'Settings' },
         ],
       },
     ],

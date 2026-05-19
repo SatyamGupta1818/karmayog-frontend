@@ -115,6 +115,8 @@ const authService = {
         );
 
         tokenStorage.setTokens(data.accessToken, data.refreshToken);
+        tokenStorage.setUser(JSON.stringify(data.user));
+
 
         return data;
     },

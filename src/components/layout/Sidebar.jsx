@@ -2,25 +2,134 @@
  * Sidebar.jsx
  *
  * Fully redesigned collapsible sidebar with a modern, premium SaaS UI.
- * Driven entirely by navigationConfig.
+ *
+ * Navigation is now DYNAMIC:
+ *  - If RBAC modules are loaded from the API, sidebar items are built
+ *    from the user's allowed modules.
+ *  - SUPER_ADMIN sees all items from navigationConfig as a fallback.
+ *  - Uses the user's real name & role from the auth/rbac stores.
  */
 
+import { useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { toggleSidebar, selectSidebarCollapsed } from '../../store/slices/uiSlice'
+import { selectCurrentUser } from '../../store/slices/authSlice'
+import { selectModules, selectRole } from '../../store/slices/rbacSlice'
 import { navigationConfig } from '../../config/navigationConfig'
+import usePermission from '../../hooks/usePermission'
 import SidebarItem from '../ui/SidebarItem'
 import { PanelLeftClose, PanelLeftOpen, Hexagon, Sparkles } from 'lucide-react'
 
-// Mock user — replace with auth store data when ready
-const MOCK_USER = {
-  name: 'Satyam Gupta',
-  role: 'Super Admin',
-  avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Alex&backgroundColor=b6e3f4',
+/**
+ * Build dynamic navigation structure from RBAC modules.
+ * Groups modules into sections based on parentId relationships.
+ */
+function buildDynamicNav(modules) {
+  if (!modules || modules.length === 0) return []
+
+  // Separate parent modules (no parentId) from children
+  const parents = modules.filter((m) => !m.parentId).sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+  const childrenMap = {}
+
+  modules.forEach((m) => {
+    if (m.parentId) {
+      if (!childrenMap[m.parentId]) childrenMap[m.parentId] = []
+      childrenMap[m.parentId].push(m)
+    }
+  })
+
+  // Sort children by sortOrder
+  Object.values(childrenMap).forEach((arr) => arr.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)))
+
+  // Build nav items
+  const items = parents.map((mod) => {
+    const children = childrenMap[mod.id]
+    const navItem = {
+      name: mod.name,
+      path: mod.path.startsWith('/') ? mod.path : `/${mod.path}`,
+      icon: mod.icon || 'Circle',
+    }
+    if (children && children.length > 0) {
+      navItem.children = children.map((child) => ({
+        name: child.name,
+        path: child.path.startsWith('/') ? child.path : `/${child.path}`,
+        icon: child.icon || 'Dot',
+      }))
+    }
+    return navItem
+  })
+
+  // Return as a single section (API-driven menus don't have static sections)
+  return [{ section: 'Menu', items }]
+}
+
+/**
+ * Filter the static navigationConfig to only show items the user has access to.
+ */
+function filterNavByPermission(navConfig, hasModuleAccess, isSuperAdmin) {
+  if (isSuperAdmin) return navConfig
+
+  return navConfig
+    .map((group) => {
+      const filteredItems = group.items
+        .map((item) => {
+          // Extract moduleKey from path (e.g., "/users" → "users", "/administrator" → "administrator")
+          const moduleKey = item.path.replace(/^\//, '').split('/')[0]
+
+          // If item has children, filter children first
+          if (item.children && item.children.length > 0) {
+            const filteredChildren = item.children.filter((child) => {
+              const childKey = child.path.replace(/^\//, '').split('/').pop()
+              return hasModuleAccess(childKey) || hasModuleAccess(moduleKey)
+            })
+
+            // Keep parent if it has accessible children
+            if (filteredChildren.length > 0) {
+              return { ...item, children: filteredChildren }
+            }
+            return null
+          }
+
+          // Leaf item — check access
+          return hasModuleAccess(moduleKey) ? item : null
+        })
+        .filter(Boolean)
+
+      if (filteredItems.length === 0) return null
+      return { ...group, items: filteredItems }
+    })
+    .filter(Boolean)
 }
 
 export default function Sidebar() {
   const dispatch = useDispatch()
   const collapsed = useSelector(selectSidebarCollapsed)
+  const user = useSelector(selectCurrentUser)
+  const role = useSelector(selectRole)
+  const modules = useSelector(selectModules)
+  const { hasModuleAccess, isSuperAdmin } = usePermission()
+
+  // Build navigation: use API modules if available, otherwise filter static config
+  const navSections = useMemo(() => {
+    // Super Admin gets access to all hardcoded routes so they can bootstrap the system
+    if (isSuperAdmin) {
+      return navigationConfig
+    }
+    if (modules && modules.length > 0) {
+      return buildDynamicNav(modules)
+    }
+    // Fallback: filter static navigationConfig by permissions
+    return filterNavByPermission(navigationConfig, hasModuleAccess, false)
+  }, [modules, hasModuleAccess, isSuperAdmin])
+
+  // User display info
+  const userName = user
+    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'
+    : 'User'
+  const userRole = role?.name
+    ? role.name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    : 'Member'
+  const avatarSeed = encodeURIComponent(user?.email || userName || 'User')
 
   return (
     <aside
@@ -68,8 +177,8 @@ export default function Sidebar() {
         >
           <div className="relative flex-shrink-0">
             <img
-              src={MOCK_USER.avatar}
-              alt={MOCK_USER.name}
+              src={`https://api.dicebear.com/7.x/notionists/svg?seed=${avatarSeed}&backgroundColor=b6e3f4`}
+              alt={userName}
               className="w-10 h-10 rounded-xl bg-slate-800 object-cover ring-2 ring-white/10 shadow-md"
             />
             {/* Premium Online indicator */}
@@ -79,12 +188,12 @@ export default function Sidebar() {
           {!collapsed && (
             <div className="min-w-0 flex-1 animate-in fade-in duration-300">
               <p className="text-sm font-bold text-white truncate">
-                {MOCK_USER.name}
+                {userName}
               </p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <Sparkles size={10} className="text-amber-500" />
                 <p className="text-[11px] font-medium text-white/50 truncate">
-                  {MOCK_USER.role}
+                  {userRole}
                 </p>
               </div>
             </div>
@@ -95,7 +204,7 @@ export default function Sidebar() {
       {/* ── Navigation ────────────────────────────────────── */}
       {/* [&::-webkit-scrollbar]:hidden hides the scrollbar for a cleaner UI but keeps it scrollable */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-6 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
-        {navigationConfig.map((group, groupIndex) => (
+        {navSections.map((group, groupIndex) => (
           <div key={group.section} className="flex flex-col gap-1">
             
             {/* Section Header */}

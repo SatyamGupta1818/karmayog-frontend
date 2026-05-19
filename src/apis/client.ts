@@ -27,6 +27,7 @@ export const tokenStorage = {
         localStorage.removeItem(TOKEN_KEYS.access);
         localStorage.removeItem(TOKEN_KEYS.refresh);
     },
+    setUser: (u: any) => localStorage.setItem('users', u)
 };
 
 // ─── Axios Instance ───────────────────────────────────────────────────────────

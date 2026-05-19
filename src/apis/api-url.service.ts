@@ -73,6 +73,52 @@ export const TASK_URLS = {
     byProject: (projectId: string) => `${PROJECTS}/${projectId}/tasks`,
 } as const;
 
+// ─── RBAC Base ────────────────────────────────────────────────────────────────
+
+const RBAC = '/rbac';
+
+// ─── Modules (Menu Master) ────────────────────────────────────────────────────
+
+const MODULES = `${RBAC}/modules`;
+export const MODULE_URLS = {
+    list: MODULES,
+    create: MODULES,
+    getById: (id: string) => `${MODULES}/${id}`,
+    update: (id: string) => `${MODULES}/${id}`,
+    delete: (id: string) => `${MODULES}/${id}`,
+    permissions: (id: string) => `${MODULES}/${id}/permissions`,
+} as const;
+
+// ─── Roles (Role Master) ─────────────────────────────────────────────────────
+
+const ROLES = `${RBAC}/roles`;
+export const ROLE_URLS = {
+    list: ROLES,
+    create: ROLES,
+    getById: (id: string) => `${ROLES}/${id}`,
+    update: (id: string) => `${ROLES}/${id}`,
+    delete: (id: string) => `${ROLES}/${id}`,
+    getPermissions: (id: string) => `${ROLES}/${id}/modules-permissions`,
+    assignPermissions: (id: string) => `${ROLES}/${id}/permissions`,
+} as const;
+
+// ─── Permissions ──────────────────────────────────────────────────────────────
+
+const PERMISSIONS = `${RBAC}/permissions`;
+export const PERMISSION_URLS = {
+    list: PERMISSIONS,
+    create: PERMISSIONS,
+    getById: (id: string) => `${PERMISSIONS}/${id}`,
+    update: (id: string) => `${PERMISSIONS}/${id}`,
+    delete: (id: string) => `${PERMISSIONS}/${id}`,
+} as const;
+
+// ─── RBAC (Permission Manifest) ──────────────────────────────────────────────
+
+export const RBAC_URLS = {
+    myPermissions: `${RBAC}/me/permissions`,
+} as const;
+
 // ─── Master export ────────────────────────────────────────────────────────────
 
 /**
@@ -89,4 +135,8 @@ export const API_URLS = {
     org: ORG_URLS,
     projects: PROJECT_URLS,
     tasks: TASK_URLS,
+    modules: MODULE_URLS,
+    roles: ROLE_URLS,
+    permissions: PERMISSION_URLS,
+    rbac: RBAC_URLS,
 } as const;
