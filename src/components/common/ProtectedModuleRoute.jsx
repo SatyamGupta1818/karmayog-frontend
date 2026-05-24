@@ -13,7 +13,7 @@ import usePermission from '../../hooks/usePermission'
 
 export default function ProtectedModuleRoute({ moduleKey, children }) {
   const location = useLocation()
-  const { canAccessPath, isSuperAdmin, rbacStatus } = usePermission()
+  const { modules, isSuperAdmin, rbacStatus } = usePermission()
 
   // While permissions are still loading, don't block — PermissionInitializer
   // handles the loading state at a higher level.
@@ -26,15 +26,28 @@ export default function ProtectedModuleRoute({ moduleKey, children }) {
     return children
   }
 
-  // No moduleKey configured — allow access (e.g., dashboard)
+  // No moduleKey configured — allow access
   if (!moduleKey) {
     return children
   }
 
-  // Check if user has access to the current path
-  const canRead = canAccessPath(location.pathname)
+  // Check if user has access to the current module
+  // 1. Check if the module key perfectly matches a DB module key
+  let hasAccess = modules.some((m) => m.key === moduleKey)
 
-  if (!canRead) {
+  // 2. Fallback: Check if the exact path matches a DB module path.
+  // This handles cases where the DB module key (e.g. 'roleMaster') doesn't exactly match
+  // the routeConfig moduleKey (e.g. 'role-master'), but the module was legitimately 
+  // returned by the API (and thus its exact path is in the allowed modules).
+  if (!hasAccess) {
+    const currentPath = location.pathname.replace(/\/$/, '') || '/'
+    hasAccess = modules.some((m) => {
+      const modPath = (m.path.startsWith('/') ? m.path : `/${m.path}`).replace(/\/$/, '') || '/'
+      return currentPath === modPath
+    })
+  }
+
+  if (!hasAccess) {
     return <Navigate to="/unauthorized" replace state={{ from: location }} />
   }
 

@@ -12,7 +12,7 @@ export default function Unauthorized() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4">
+    <div className="flex-1 flex items-center justify-center p-8 h-full">
       <div className="flex flex-col items-center gap-6 max-w-md text-center">
         {/* Icon */}
         <div className="relative">

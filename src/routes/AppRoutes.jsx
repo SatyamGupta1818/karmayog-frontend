@@ -76,7 +76,6 @@ export default function AppRoutes() {
         {/* These do NOT have the sidebar/header or auth checks */}
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/login" element={<Auth />} />
-        <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* ── REDIRECTS ────────────────────────────────────────────── */}
         {/* Initial landing goes to onboarding */}
@@ -94,6 +93,7 @@ export default function AppRoutes() {
           }
         >
           {renderRoutes(routeConfig)}
+          <Route path="/unauthorized" element={<Unauthorized />} />
         </Route>
 
         {/* ── 404 FALLBACK ─────────────────────────────────────────── */}

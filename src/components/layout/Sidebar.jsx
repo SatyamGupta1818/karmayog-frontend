@@ -66,21 +66,31 @@ function buildDynamicNav(modules) {
 /**
  * Filter the static navigationConfig to only show items the user has access to.
  */
-function filterNavByPermission(navConfig, hasModuleAccess, isSuperAdmin) {
+function filterNavByPermission(navConfig, modules, isSuperAdmin) {
   if (isSuperAdmin) return navConfig
+
+  // Helper to check if a specific path or moduleKey is in the allowed modules
+  const hasAccess = (path, fallbackKey) => {
+    const currentPath = path.replace(/\/$/, '') || '/'
+    return modules.some((m) => {
+      const modPath = (m.path.startsWith('/') ? m.path : `/${m.path}`).replace(/\/$/, '') || '/'
+      return currentPath === modPath || m.key === fallbackKey
+    })
+  }
 
   return navConfig
     .map((group) => {
       const filteredItems = group.items
         .map((item) => {
-          // Extract moduleKey from path (e.g., "/users" → "users", "/administrator" → "administrator")
-          const moduleKey = item.path.replace(/^\//, '').split('/')[0]
+          // Extract moduleKey fallback (e.g., "/users" → "users")
+          const itemKey = item.path.replace(/^\//, '').split('/')[0]
 
           // If item has children, filter children first
           if (item.children && item.children.length > 0) {
             const filteredChildren = item.children.filter((child) => {
               const childKey = child.path.replace(/^\//, '').split('/').pop()
-              return hasModuleAccess(childKey) || hasModuleAccess(moduleKey)
+              // Show child if they explicitly have access to the child, OR if they have access to the parent module
+              return hasAccess(child.path, childKey) || hasAccess(item.path, itemKey)
             })
 
             // Keep parent if it has accessible children
@@ -91,7 +101,7 @@ function filterNavByPermission(navConfig, hasModuleAccess, isSuperAdmin) {
           }
 
           // Leaf item — check access
-          return hasModuleAccess(moduleKey) ? item : null
+          return hasAccess(item.path, itemKey) ? item : null
         })
         .filter(Boolean)
 
@@ -107,20 +117,15 @@ export default function Sidebar() {
   const user = useSelector(selectCurrentUser)
   const role = useSelector(selectRole)
   const modules = useSelector(selectModules)
-  const { hasModuleAccess, isSuperAdmin } = usePermission()
+  const { isSuperAdmin } = usePermission()
 
-  // Build navigation: use API modules if available, otherwise filter static config
+  // Build navigation: filter static navigationConfig by user's actual allowed modules
   const navSections = useMemo(() => {
-    // Super Admin gets access to all hardcoded routes so they can bootstrap the system
     if (isSuperAdmin) {
       return navigationConfig
     }
-    if (modules && modules.length > 0) {
-      return buildDynamicNav(modules)
-    }
-    // Fallback: filter static navigationConfig by permissions
-    return filterNavByPermission(navigationConfig, hasModuleAccess, false)
-  }, [modules, hasModuleAccess, isSuperAdmin])
+    return filterNavByPermission(navigationConfig, modules || [], false)
+  }, [modules, isSuperAdmin])
 
   // User display info
   const userName = user

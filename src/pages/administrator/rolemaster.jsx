@@ -15,6 +15,7 @@ import {
 import roleService from '../../apis/services/rbac/role.service'
 import PermissionGuard from '../../components/common/PermissionGuard'
 import { toast } from '../../components/common/Toast'
+import { navigationConfig } from '../../config/navigationConfig'
 
 const EMPTY_FORM = { name: '', description: '' }
 
@@ -126,7 +127,35 @@ export default function RoleMaster() {
     setPermLoading(true)
     try {
       const data = await roleService.getRolePermissions(role.id)
-      setPermData(normalizePermData(data))
+      let normalized = normalizePermData(data)
+      
+      // Build a sort map from navigationConfig to enforce the visual order
+      const orderMap = {}
+      let sortIndex = 0
+      navigationConfig.forEach(section => {
+        section.items.forEach(item => {
+          const itemKey = item.path.replace(/^\//, '').split('/')[0]
+          orderMap[itemKey] = sortIndex++
+          if (item.children) {
+            item.children.forEach(child => {
+              const childKey = child.path.replace(/^\//, '').split('/').pop()
+              orderMap[childKey] = sortIndex++
+            })
+          }
+        })
+      })
+
+      // Sort the modules based on the navigationConfig order
+      normalized.sort((a, b) => {
+        // We try to match the moduleKey to the orderMap. If it's missing, we put it at the end.
+        const orderA = orderMap[a.moduleKey] ?? 999
+        const orderB = orderMap[b.moduleKey] ?? 999
+        if (orderA !== orderB) return orderA - orderB
+        // Fallback to alphabetical sorting if both are not in config or share the same order
+        return a.moduleName?.localeCompare(b.moduleName) || 0
+      })
+
+      setPermData(normalized)
     } catch (err) {
       toast.error('Permission Load Failed', err?.response?.data?.message || 'Failed to load permissions.')
       setPermData([])

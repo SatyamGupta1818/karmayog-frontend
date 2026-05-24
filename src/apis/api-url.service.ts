@@ -119,6 +119,28 @@ export const RBAC_URLS = {
     myPermissions: `${RBAC}/me/permissions`,
 } as const;
 
+// ─── Departments ──────────────────────────────────────────────────────────────
+
+const DEPARTMENT = '/department';
+export const DEPARTMENT_URLS = {
+    create: `${DEPARTMENT}/create`,
+    list: `${DEPARTMENT}/list`,
+    getById: (id: string) => `${DEPARTMENT}/${id}`,
+    update: (id: string) => `${DEPARTMENT}/update/${id}`,
+    delete: (id: string) => `${DEPARTMENT}/delete/${id}`,
+} as const;
+
+// ─── Teams ────────────────────────────────────────────────────────────────────
+
+const TEAMS = '/teams';
+export const TEAM_URLS = {
+    create: `${TEAMS}/create`,
+    list: `${TEAMS}/list`,
+    getById: (id: string) => `${TEAMS}/${id}`,
+    update: (id: string) => `${TEAMS}/update/${id}`,
+    delete: (id: string) => `${TEAMS}/delete/${id}`,
+} as const;
+
 // ─── Master export ────────────────────────────────────────────────────────────
 
 /**
@@ -139,4 +161,6 @@ export const API_URLS = {
     roles: ROLE_URLS,
     permissions: PERMISSION_URLS,
     rbac: RBAC_URLS,
+    departments: DEPARTMENT_URLS,
+    teams: TEAM_URLS,
 } as const;
