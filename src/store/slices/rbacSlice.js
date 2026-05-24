@@ -41,9 +41,19 @@ function buildPermissionMap(modules) {
   if (!modules || !Array.isArray(modules)) return map
 
   modules.forEach((mod) => {
-    if (mod.key && Array.isArray(mod.permissions)) {
-      map[mod.key] = mod.permissions.map((p) => p.key)
+    const permSet = new Set()
+    
+    if (Array.isArray(mod.permissions)) {
+      mod.permissions.forEach((p) => {
+        if (p.key) permSet.add(p.key.toUpperCase())
+        if (p.name) permSet.add(p.name.toUpperCase())
+      })
     }
+
+    const permsArray = Array.from(permSet)
+
+    if (mod.key) map[mod.key.toLowerCase()] = permsArray
+    if (mod.name) map[mod.name.toLowerCase()] = permsArray
   })
 
   return map

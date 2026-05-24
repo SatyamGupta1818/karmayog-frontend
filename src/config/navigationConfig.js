@@ -79,6 +79,12 @@ export const navigationConfig = [
     section: 'Administration',
     items: [
       {
+        name: 'Organizations',
+        path: '/organizations',
+        icon: 'Building2',
+        superAdminOnly: true,
+      },
+      {
         name: 'Administrator',
         path: '/administrator',
         icon: 'FolderKanban',

@@ -15,37 +15,39 @@ export const AUTH_URLS = {
     me: `${AUTH}/me`,
 
     register: `${AUTH}/register`,
+
+    switchOrganization: `${AUTH}/switch-organization`,
 } as const;
 
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 
-const USERS = '/users';
+const USERS = '/user';
 export const USER_URLS = {
-    list: USERS,
+    create: `${USERS}/create`,
+
+    list: `${USERS}/list`,
 
     getById: (id: string) => `${USERS}/${id}`,
 
-    update: (id: string) => `${USERS}/${id}`,
+    update: (id: string) => `${USERS}/update/${id}`,
 
-    delete: (id: string) => `${USERS}/${id}`,
-
-    updateRole: (id: string) => `${USERS}/${id}/role`,
+    delete: (id: string) => `${USERS}/delete/${id}`,
 } as const;
 
 // ─── Organization ─────────────────────────────────────────────────────────────
 
 const ORG = '/organization';
 export const ORG_URLS = {
-    me: `${ORG}/me`,
+    create: `${ORG}/create`,
 
-    update: ORG,
+    list: `${ORG}/list`,
 
-    members: `${ORG}/members`,
+    getById: (id: string) => `${ORG}/${id}`,
 
-    invite: `${ORG}/invite`,
+    update: (id: string) => `${ORG}/update/${id}`,
 
-    removeMember: (userId: string) => `${ORG}/members/${userId}`,
+    delete: (id: string) => `${ORG}/delete/${id}`,
 } as const;
 
 // ─── Projects ─────────────────────────────────────────────────────────────────

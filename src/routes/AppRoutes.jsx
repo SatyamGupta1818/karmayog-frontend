@@ -40,7 +40,7 @@ function renderRoutes(routes) {
               index
               element={
                 <Suspense fallback={<PageLoader />}>
-                  <ProtectedModuleRoute moduleKey={route.moduleKey}>
+                  <ProtectedModuleRoute moduleKey={route.moduleKey} superAdminOnly={route.superAdminOnly}>
                     <Element />
                   </ProtectedModuleRoute>
                 </Suspense>
@@ -58,7 +58,7 @@ function renderRoutes(routes) {
         path={route.path}
         element={
           <Suspense fallback={<PageLoader />}>
-            <ProtectedModuleRoute moduleKey={route.moduleKey}>
+            <ProtectedModuleRoute moduleKey={route.moduleKey} superAdminOnly={route.superAdminOnly}>
               <Element />
             </ProtectedModuleRoute>
           </Suspense>

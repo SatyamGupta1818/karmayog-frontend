@@ -48,8 +48,8 @@ export default function usePermission() {
       const dotIndex = permString.indexOf('.')
       if (dotIndex === -1) return false
 
-      const moduleKey = permString.substring(0, dotIndex)
-      const action = permString.substring(dotIndex + 1)
+      const moduleKey = permString.substring(0, dotIndex).toLowerCase()
+      const action = permString.substring(dotIndex + 1).toUpperCase()
 
       const modulePermissions = permissionMap[moduleKey]
       if (!modulePermissions) return false
@@ -68,7 +68,7 @@ export default function usePermission() {
     (moduleKey) => {
       if (isSuperAdmin) return true
       if (!moduleKey) return false
-      const perms = permissionMap[moduleKey]
+      const perms = permissionMap[moduleKey.toLowerCase()]
       return Array.isArray(perms) && perms.length > 0
     },
     [permissionMap, isSuperAdmin]

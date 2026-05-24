@@ -117,6 +117,18 @@ const authService = {
         tokenStorage.setTokens(data.accessToken, data.refreshToken);
         tokenStorage.setUser(JSON.stringify(data.user));
 
+        const organization =
+            (data as any).organization ||
+            (data as any).activeOrganization ||
+            (data as any).org ||
+            (data as any).data?.organization ||
+            (data as any).user?.organization ||
+            (data as any).user?.activeOrganization;
+
+        if (organization) {
+            localStorage.setItem('organization', JSON.stringify(organization));
+        }
+
 
         return data;
     },

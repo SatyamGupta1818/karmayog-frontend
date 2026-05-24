@@ -30,6 +30,7 @@ const Epics = lazy(() => import('../pages/projects/Epics'))
 const Stories = lazy(() => import('../pages/projects/Stories'))
 const Users = lazy(() => import('../pages/users'))
 const Departments = lazy(() => import('../pages/departments'))
+const Organizations = lazy(() => import('../pages/organizations'))
 const RoleMaster = lazy(() => import('../pages/administrator/rolemaster'))
 const MenuMaster = lazy(() => import('../pages/administrator/menumaster'))
 const PermissionMaster = lazy(() => import('../pages/administrator/permissionmaster'))
@@ -62,6 +63,12 @@ export const routeConfig = [
     path: 'departments',
     element: Departments,
     moduleKey: 'departments',
+  },
+  {
+    path: 'organizations',
+    element: Organizations,
+    moduleKey: 'organizations',
+    superAdminOnly: true,
   },
   {
     path: 'administrator',

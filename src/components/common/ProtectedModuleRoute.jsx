@@ -11,7 +11,7 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import usePermission from '../../hooks/usePermission'
 
-export default function ProtectedModuleRoute({ moduleKey, children }) {
+export default function ProtectedModuleRoute({ moduleKey, superAdminOnly = false, children }) {
   const location = useLocation()
   const { modules, isSuperAdmin, rbacStatus } = usePermission()
 
@@ -24,6 +24,10 @@ export default function ProtectedModuleRoute({ moduleKey, children }) {
   // SUPER_ADMIN bypasses all module checks
   if (isSuperAdmin) {
     return children
+  }
+
+  if (superAdminOnly) {
+    return <Navigate to="/unauthorized" replace state={{ from: location }} />
   }
 
   // No moduleKey configured — allow access

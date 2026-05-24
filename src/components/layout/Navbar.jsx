@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useDispatch } from 'react-redux'
 import {
   Bell,
+  Building2,
+  Check,
   ChevronDown,
   ChevronRight,
   Loader2,
@@ -13,6 +16,16 @@ import {
 } from 'lucide-react'
 import { navigationConfig } from '../../config/navigationConfig'
 import useAuth from '../../hooks/useAuth'
+import usePermission from '../../hooks/usePermission'
+import organizationService from '../../apis/services/organization/organization.service'
+import { toast } from '../common/Toast'
+import { fetchPermissions, clearRbac } from '../../store/slices/rbacSlice'
+import { setCredentials } from '../../store/slices/authSlice'
+import {
+  getOrganizationDetails,
+  getUserDisplayDetails,
+  normalizeOrganization,
+} from '../../utils/session'
 
 function useBreadcrumb() {
   const { pathname } = useLocation()
@@ -34,62 +47,122 @@ function useBreadcrumb() {
   })
 }
 
-function getUserDetails(authUser) {
-  try {
-    const storedUsers = localStorage.getItem('users');
-    let userData = storedUsers ? JSON.parse(storedUsers) : null;
-
-    // Handle case where 'users' might be an array
-    if (Array.isArray(userData)) {
-      // Try to find the matching user by email from useAuth, or fallback to the first user
-      userData = authUser?.email 
-        ? userData.find((u) => u.email === authUser.email) || userData[0] 
-        : userData[0];
-    }
-
-    // Safely extract firstName, lastName, and email with fallbacks
-    const firstName = userData?.firstName || authUser?.firstName || '';
-    const lastName = userData?.lastName || authUser?.lastName || '';
-    const email = userData?.email || authUser?.email || '';
-
-    const fullName = `${firstName} ${lastName}`.trim();
-
-    return {
-      displayName: fullName || 'Unknown User',
-      email: email
-    };
-  } catch (error) {
-    console.error('Error parsing user data from localStorage', error);
-    return {
-      displayName: 'Unknown User',
-      email: authUser?.email || ''
-    };
-  }
-}
-
 function getAvatarSeed(value) {
   return encodeURIComponent(value || 'User')
+}
+
+function extractList(response, resourceKey) {
+  if (Array.isArray(response)) return response
+
+  const candidates = [
+    response?.[resourceKey],
+    response?.data,
+    response?.items,
+    response?.results,
+    response?.rows,
+    response?.data?.[resourceKey],
+    response?.data?.data,
+    response?.data?.items,
+    response?.data?.results,
+    response?.data?.rows,
+  ]
+
+  return candidates.find(Array.isArray) || []
+}
+
+function extractEntity(response, resourceKey) {
+  const candidates = [
+    response?.[resourceKey],
+    response?.data?.[resourceKey],
+    response?.data?.data,
+    response?.data,
+    response,
+  ]
+
+  return candidates.find((candidate) => candidate && typeof candidate === 'object' && !Array.isArray(candidate)) || null
+}
+
+function getErrorMessage(error, fallback) {
+  const message = error?.response?.data?.message || error?.response?.data?.error || error?.message
+  return Array.isArray(message) ? message.join(', ') : message || fallback
+}
+
+function getSwitchPayload(response) {
+  const payload = response?.data || response || {}
+  return {
+    accessToken: payload.accessToken || payload.tokens?.accessToken,
+    refreshToken: payload.refreshToken || payload.tokens?.refreshToken,
+    user: payload.user || payload.currentUser,
+    organization: payload.organization || payload.activeOrganization || payload.org,
+  }
 }
 
 export default function Navbar() {
   const breadcrumb = useBreadcrumb()
   const pageTitle = breadcrumb[breadcrumb.length - 1]
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const menuRef = useRef(null)
+  const orgRef = useRef(null)
   const { user, logout } = useAuth()
+  const { isSuperAdmin } = usePermission()
 
   const [menuOpen, setMenuOpen] = useState(false)
+  const [orgMenuOpen, setOrgMenuOpen] = useState(false)
+  const [organizations, setOrganizations] = useState([])
+  const [currentOrg, setCurrentOrg] = useState(() => getOrganizationDetails(user))
+  const [orgLoading, setOrgLoading] = useState(false)
+  const [switchingOrgId, setSwitchingOrgId] = useState(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
 
   // Safely grab user details
-  const { displayName: userName, email: userEmail } = getUserDetails(user)
+  const { displayName: userName, email: userEmail } = getUserDisplayDetails(user)
   const avatarSeed = getAvatarSeed(userEmail || userName)
+
+  const loadCurrentOrganization = useCallback(async () => {
+    try {
+      const response = await organizationService.getCurrent()
+      const organization = normalizeOrganization(extractEntity(response, 'organization'))
+      if (organization?.name) {
+        localStorage.setItem('organization', JSON.stringify(organization.raw || organization))
+        setCurrentOrg(organization)
+      }
+    } catch {
+      setCurrentOrg(getOrganizationDetails(user))
+    }
+  }, [user])
+
+  const loadOrganizations = useCallback(async () => {
+    if (!isSuperAdmin) return
+
+    try {
+      setOrgLoading(true)
+      const response = await organizationService.list({
+        page: 1,
+        limit: 100,
+        sortBy: 'organizationName',
+        sortOrder: 'ASC',
+      })
+      const normalized = extractList(response, 'organizations')
+        .map(normalizeOrganization)
+        .filter((organization) => organization?.id && organization?.name)
+
+      setOrganizations(normalized)
+    } catch (error) {
+      toast.error('Failed to load organizations', getErrorMessage(error, 'Failed to load organizations.'))
+    } finally {
+      setOrgLoading(false)
+    }
+  }, [isSuperAdmin])
 
   useEffect(() => {
     function handleOutsideClick(event) {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(false)
+      }
+      if (orgRef.current && !orgRef.current.contains(event.target)) {
+        setOrgMenuOpen(false)
       }
     }
 
@@ -97,9 +170,73 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleOutsideClick)
   }, [])
 
+  useEffect(() => {
+    setCurrentOrg(getOrganizationDetails(user))
+    loadCurrentOrganization()
+  }, [loadCurrentOrganization, user])
+
+  useEffect(() => {
+    const handleOrganizationSwitch = (event) => {
+      const organization = normalizeOrganization(event.detail)
+      if (organization?.name) {
+        setCurrentOrg(organization)
+      }
+    }
+
+    window.addEventListener('organization:switch', handleOrganizationSwitch)
+    return () => window.removeEventListener('organization:switch', handleOrganizationSwitch)
+  }, [])
+
   const openLogoutConfirm = () => {
     setMenuOpen(false)
     setConfirmOpen(true)
+  }
+
+  const toggleOrganizationMenu = async () => {
+    if (!isSuperAdmin) return
+
+    const willOpen = !orgMenuOpen
+    setOrgMenuOpen(willOpen)
+    setMenuOpen(false)
+
+    if (willOpen && organizations.length === 0) {
+      await loadOrganizations()
+    }
+  }
+
+  const handleSwitchOrganization = async (organization) => {
+    if (!organization?.id || organization.id === currentOrg?.id) {
+      setOrgMenuOpen(false)
+      return
+    }
+
+    setSwitchingOrgId(organization.id)
+
+    try {
+      const response = await organizationService.switchOrganization(organization.id)
+      const payload = getSwitchPayload(response)
+      const nextOrganization = normalizeOrganization(payload.organization) || organization
+
+      if (payload.accessToken || payload.refreshToken || payload.user) {
+        dispatch(setCredentials({
+          accessToken: payload.accessToken,
+          refreshToken: payload.refreshToken,
+          user: payload.user,
+        }))
+      }
+
+      localStorage.setItem('organization', JSON.stringify(nextOrganization.raw || nextOrganization))
+      setCurrentOrg(nextOrganization)
+      setOrgMenuOpen(false)
+      dispatch(clearRbac())
+      dispatch(fetchPermissions())
+      toast.success('Organization Switched', `Now working in "${nextOrganization.name}".`)
+      navigate('/dashboard', { replace: true })
+    } catch (error) {
+      toast.error('Switch Failed', getErrorMessage(error, 'Failed to switch organization.'))
+    } finally {
+      setSwitchingOrgId(null)
+    }
   }
 
   const closeLogoutConfirm = () => {
@@ -149,6 +286,97 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          <div ref={orgRef} className="relative hidden md:block">
+            <button
+              type="button"
+              onClick={toggleOrganizationMenu}
+              disabled={!isSuperAdmin}
+              className={`
+                flex max-w-[240px] items-center gap-2 rounded-xl
+                border border-surface-200 bg-white px-3 py-2
+                text-sm shadow-sm transition-all duration-150
+                ${isSuperAdmin ? 'text-ink-muted hover:border-surface-300 hover:text-ink' : 'cursor-default text-ink'}
+              `}
+              title={isSuperAdmin ? 'Switch organization' : currentOrg?.name}
+            >
+              <Building2 size={15} className="flex-shrink-0 text-amber-500" />
+              <span className="truncate text-xs font-semibold">
+                {currentOrg?.name || 'Organization'}
+              </span>
+              {isSuperAdmin && (
+                <ChevronDown
+                  size={14}
+                  className={`flex-shrink-0 text-ink-muted transition-transform duration-150 ${orgMenuOpen ? 'rotate-180' : ''}`}
+                />
+              )}
+            </button>
+
+            {isSuperAdmin && orgMenuOpen && (
+              <div
+                role="menu"
+                className="
+                  absolute right-0 top-11 w-80 overflow-hidden
+                  rounded-xl border border-surface-200
+                  bg-white shadow-xl shadow-surface-900/10
+                "
+              >
+                <div className="border-b border-surface-100 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+                    Switch Organization
+                  </p>
+                  <p className="mt-1 truncate text-sm font-semibold text-ink">
+                    {currentOrg?.name || 'Current organization'}
+                  </p>
+                </div>
+
+                <div className="max-h-72 overflow-y-auto py-1">
+                  {orgLoading ? (
+                    <div className="flex items-center gap-2 px-4 py-4 text-sm text-ink-muted">
+                      <Loader2 size={15} className="animate-spin text-amber-500" />
+                      Loading organizations...
+                    </div>
+                  ) : organizations.length === 0 ? (
+                    <div className="px-4 py-4 text-sm text-ink-muted">
+                      No organizations available.
+                    </div>
+                  ) : (
+                    organizations.map((organization) => {
+                      const active = organization.id === currentOrg?.id
+                      const switching = switchingOrgId === organization.id
+
+                      return (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          key={organization.id}
+                          onClick={() => handleSwitchOrganization(organization)}
+                          disabled={switchingOrgId !== null}
+                          className={`
+                            flex w-full items-center gap-3 px-4 py-3
+                            text-left text-sm transition-colors duration-150
+                            ${active ? 'bg-amber-50 text-amber-700' : 'text-ink hover:bg-surface-100'}
+                            disabled:opacity-70
+                          `}
+                        >
+                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-amber-100 bg-amber-50 text-amber-600">
+                            {switching ? <Loader2 size={16} className="animate-spin" /> : <Building2 size={16} />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-semibold">{organization.name}</p>
+                            {organization.email && (
+                              <p className="truncate text-xs text-ink-muted">{organization.email}</p>
+                            )}
+                          </div>
+                          {active && <Check size={16} className="flex-shrink-0" />}
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           <button
             type="button"
             className="
@@ -239,6 +467,11 @@ export default function Navbar() {
                       <p className="truncate text-sm font-semibold text-ink">{userName}</p>
                       {userEmail && (
                         <p className="truncate text-xs text-ink-muted">{userEmail}</p>
+                      )}
+                      {currentOrg?.name && (
+                        <p className="mt-0.5 truncate text-xs font-medium text-amber-600">
+                          {currentOrg.name}
+                        </p>
                       )}
                     </div>
                   </div>

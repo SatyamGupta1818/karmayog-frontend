@@ -18,7 +18,8 @@ import { selectModules, selectRole } from '../../store/slices/rbacSlice'
 import { navigationConfig } from '../../config/navigationConfig'
 import usePermission from '../../hooks/usePermission'
 import SidebarItem from '../ui/SidebarItem'
-import { PanelLeftClose, PanelLeftOpen, Hexagon, Sparkles } from 'lucide-react'
+import { PanelLeftClose, PanelLeftOpen, Hexagon, Sparkles, Building2 } from 'lucide-react'
+import { getOrganizationDetails, getUserDisplayDetails } from '../../utils/session'
 
 /**
  * Build dynamic navigation structure from RBAC modules.
@@ -82,12 +83,16 @@ function filterNavByPermission(navConfig, modules, isSuperAdmin) {
     .map((group) => {
       const filteredItems = group.items
         .map((item) => {
+          if (item.superAdminOnly) return null
+
           // Extract moduleKey fallback (e.g., "/users" → "users")
           const itemKey = item.path.replace(/^\//, '').split('/')[0]
 
           // If item has children, filter children first
           if (item.children && item.children.length > 0) {
             const filteredChildren = item.children.filter((child) => {
+              if (child.superAdminOnly) return false
+
               const childKey = child.path.replace(/^\//, '').split('/').pop()
               // Show child if they explicitly have access to the child, OR if they have access to the parent module
               return hasAccess(child.path, childKey) || hasAccess(item.path, itemKey)
@@ -128,13 +133,12 @@ export default function Sidebar() {
   }, [modules, isSuperAdmin])
 
   // User display info
-  const userName = user
-    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User'
-    : 'User'
+  const { displayName: userName, email: userEmail } = getUserDisplayDetails(user)
+  const organization = getOrganizationDetails(user)
   const userRole = role?.name
     ? role.name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
     : 'Member'
-  const avatarSeed = encodeURIComponent(user?.email || userName || 'User')
+  const avatarSeed = encodeURIComponent(userEmail || userName || 'User')
 
   return (
     <aside
@@ -201,6 +205,14 @@ export default function Sidebar() {
                   {userRole}
                 </p>
               </div>
+              {organization?.name && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <Building2 size={10} className="text-amber-500" />
+                  <p className="text-[11px] font-medium text-white/55 truncate">
+                    {organization.name}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
