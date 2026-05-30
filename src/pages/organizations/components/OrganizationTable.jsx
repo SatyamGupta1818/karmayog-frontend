@@ -9,6 +9,7 @@ import {
   Pencil,
   Power,
   Trash2,
+  User,
 } from 'lucide-react'
 
 const planClasses = {
@@ -97,6 +98,9 @@ export default function OrganizationTable({
               <th className="min-w-[190px] px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 Profile
               </th>
+              <th className="min-w-[200px] px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">
+                Owner
+              </th>
               <th className="min-w-[180px] px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">
                 Subscription
               </th>
@@ -114,14 +118,14 @@ export default function OrganizationTable({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="py-16 text-center">
+                <td colSpan={7} className="py-16 text-center">
                   <Loader2 size={24} className="mx-auto mb-2 animate-spin text-amber-500" />
                   <p className="text-sm text-ink-muted">Loading organizations...</p>
                 </td>
               </tr>
             ) : organizations.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-16 text-center">
+                <td colSpan={7} className="px-6 py-16 text-center">
                   <Building2 size={26} className="mx-auto mb-3 text-ink-muted" />
                   <p className="text-sm font-medium text-ink">No organizations found</p>
                   <p className="mt-1 text-xs text-ink-muted">Create an organization or adjust the filters.</p>
@@ -178,6 +182,25 @@ export default function OrganizationTable({
                           {organization.size || 'No size'}
                         </span>
                       </div>
+                    </td>
+
+                    <td className="px-5 py-3.5">
+                      {organization.owner ? (
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-ink">
+                            {organization.owner.firstName} {organization.owner.lastName}
+                          </p>
+                          <div className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
+                            <Mail size={12} className="shrink-0" />
+                            <span className="truncate">{organization.owner.email}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-xs italic text-ink-muted">
+                          <User size={13} className="shrink-0 opacity-50" />
+                          <span>No owner assigned</span>
+                        </div>
+                      )}
                     </td>
 
                     <td className="px-5 py-3.5">

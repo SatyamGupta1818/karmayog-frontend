@@ -54,11 +54,11 @@ export const ORG_URLS = {
 
 const PROJECTS = '/projects';
 export const PROJECT_URLS = {
-    list: PROJECTS,
-    create: PROJECTS,
+    create: `${PROJECTS}/create`,
+    list: `${PROJECTS}/list`,
     getById: (id: string) => `${PROJECTS}/${id}`,
-    update: (id: string) => `${PROJECTS}/${id}`,
-    delete: (id: string) => `${PROJECTS}/${id}`,
+    update: (id: string) => `${PROJECTS}/update/${id}`,
+    delete: (id: string) => `${PROJECTS}/delete/${id}`,
     members: (id: string) => `${PROJECTS}/${id}/members`,
 } as const;
 

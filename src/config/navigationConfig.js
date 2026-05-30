@@ -44,13 +44,14 @@ export const navigationConfig = [
     items: [
       {
         name: 'Workspace',
-        path: '/projects',
+        path: '/workspace',
         icon: 'FolderKanban',
         // Children create a collapsible nested menu
         children: [
-          { name: 'Epics', path: '/projects/epics', icon: 'Zap' },
-          { name: 'Stories', path: '/projects/stories', icon: 'BookOpen' },
-          { name: 'Tasks', path: '/projects/tasks', icon: 'CheckSquare' },
+          { name: 'Projects', path: '/workspace/projects', icon: 'Folder' },
+          { name: 'Epics', path: '/workspace/epics', icon: 'Zap' },
+          { name: 'Stories', path: '/workspace/stories', icon: 'BookOpen' },
+          { name: 'Tasks', path: '/workspace/tasks', icon: 'CheckSquare' },
         ],
       },
     ],

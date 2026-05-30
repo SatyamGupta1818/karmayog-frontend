@@ -24,6 +24,7 @@ import { lazy } from 'react'
 // ── Page Imports (lazy-loaded for code splitting) ──────────
 const Dashboard = lazy(() => import('../pages/dashboard'))
 const ProjectsIndex = lazy(() => import('../pages/projects'))
+const ProjectDetails = lazy(() => import('../pages/projects/ProjectDetails'))
 const AdministrationIndex = lazy(() => import('../pages/administrator'))
 const Tasks = lazy(() => import('../pages/projects/Tasks'))
 const Epics = lazy(() => import('../pages/projects/Epics'))
@@ -44,11 +45,18 @@ export const routeConfig = [
     moduleKey: 'dashboard',
   },
   {
-    path: 'projects',
-    element: ProjectsIndex,
+    path: 'workspace',
     moduleKey: 'projects',
-    // Nested child routes rendered inside ProjectsIndex via <Outlet>
     children: [
+      {
+        path: 'projects',
+        element: ProjectsIndex,
+        moduleKey: 'projects',
+        children: [
+          // Use a stable 'details' path and read the project id via query params
+          { path: 'details', element: ProjectDetails, moduleKey: 'projects' },
+        ],
+      },
       { path: 'tasks', element: Tasks, moduleKey: 'projects' },
       { path: 'epics', element: Epics, moduleKey: 'projects' },
       { path: 'stories', element: Stories, moduleKey: 'projects' },

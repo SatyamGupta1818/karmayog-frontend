@@ -110,6 +110,7 @@ const normalizeOrganization = (organization) => {
     subscriptionType: organization?.subscriptionType || 'FREE',
     isSubscriptionTaken: normalizeBoolean(organization?.isSubscriptionTaken, false),
     isActive: normalizeBoolean(organization?.isActive, true),
+    owner: organization?.owner || null,
     createdAt: organization?.createdAt || organization?.created_at || '',
     updatedAt: organization?.updatedAt || organization?.updated_at || organization?.createdAt || '',
     createdAtLabel: formatDate(organization?.createdAt || organization?.created_at),
