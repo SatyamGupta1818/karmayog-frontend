@@ -1,4 +1,4 @@
-import { Filter, RefreshCw, Search } from 'lucide-react'
+import { Filter, RefreshCw, Search, ChevronDown, ChevronUp } from 'lucide-react'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All statuses' },
@@ -14,6 +14,10 @@ export default function ProjectToolbar({
   onSearchChange,
   onFilterChange,
   onRefresh,
+  departments = [],
+  departmentId = '',
+  sortBy = 'createdAt',
+  sortOrder = 'DESC',
 }) {
   return (
     <div className="rounded-2xl border border-surface-200 bg-white px-4 py-4 shadow-card">
@@ -44,6 +48,37 @@ export default function ProjectToolbar({
               <option key={option.value} value={option.value}>{option.label}</option>
             ))}
           </select>
+
+          <select
+            value={departmentId}
+            onChange={(event) => onFilterChange('department', event.target.value)}
+            className="rounded-xl border border-surface-200 bg-white px-3 py-2 text-xs font-semibold text-ink-muted outline-none transition-all focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/20"
+          >
+            <option value="">All Departments</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>{d.name}</option>
+            ))}
+          </select>
+
+          <select
+            value={sortBy}
+            onChange={(event) => onFilterChange('sortBy', event.target.value)}
+            className="rounded-xl border border-surface-200 bg-white px-3 py-2 text-xs font-semibold text-ink-muted outline-none transition-all focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/20"
+          >
+            <option value="createdAt">Sort: Created At</option>
+            <option value="name">Sort: Name</option>
+            <option value="status">Sort: Status</option>
+            <option value="department">Sort: Department</option>
+          </select>
+
+          <button
+            type="button"
+            onClick={() => onFilterChange('sortOrder', sortOrder === 'ASC' ? 'DESC' : 'ASC')}
+            className="rounded-xl border px-3 py-2 text-xs font-semibold text-ink-muted"
+            title="Toggle sort order"
+          >
+            {sortOrder === 'ASC' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
 
           <button
             type="button"

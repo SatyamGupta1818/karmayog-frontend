@@ -12,16 +12,23 @@ const getStatusClass = (status) => {
 
 export default function ProjectTable({
   projects,
+  total,
   loading,
   deletingId,
   onView,
   onDelete,
 }) {
+  const formatDate = (value) => {
+    if (!value) return '-' 
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return '-'
+    return d.toLocaleDateString()
+  }
   return (
     <div className="min-w-0 overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card">
       <div className="flex items-center justify-between border-b border-surface-100 bg-surface-100/50 px-5 py-3.5">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Projects ({projects.length})</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-ink-muted">Projects ({typeof total === 'number' ? total : projects.length})</p>
           <p className="mt-0.5 text-[11px] text-ink-muted">Manage your active and planning initiatives.</p>
         </div>
       </div>
@@ -31,8 +38,12 @@ export default function ProjectTable({
           <thead>
             <tr className="border-b border-surface-100">
               <th className="min-w-[200px] px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">Project</th>
+              <th className="min-w-[220px] px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">Department</th>
               <th className="min-w-[320px] px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">Description</th>
               <th className="w-28 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">Status</th>
+              <th className="w-24 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">Start</th>
+              <th className="w-24 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">End</th>
+              <th className="min-w-[160px] px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">Owner</th>
               <th className="w-32 px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-ink-muted">Actions</th>
             </tr>
           </thead>
@@ -67,12 +78,24 @@ export default function ProjectTable({
                       </div>
                     </td>
                     <td className="px-5 py-4">
+                      <p className="text-sm text-ink-muted">{project.departmentName || '-'}</p>
+                    </td>
+                    <td className="px-5 py-4">
                       <p className="line-clamp-2 text-sm text-ink-muted">{project.description || 'No description provided.'}</p>
                     </td>
                     <td className="px-5 py-4">
                       <span className={`inline-flex rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] ${getStatusClass(project.status)}`}>
                         {project.status || 'Unknown'}
                       </span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <p className="text-sm text-ink-muted">{formatDate(project.startDate)}</p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <p className="text-sm text-ink-muted">{formatDate(project.endDate)}</p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <p className="text-sm text-ink-muted">{project.owner || '-'}</p>
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center justify-end gap-2">

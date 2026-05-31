@@ -17,6 +17,7 @@ import DeleteConfirmModal from './components/DeleteConfirmModal'
 import ProjectFormModal from './components/ProjectFormModal'
 import ProjectTable from './components/ProjectTable'
 import ProjectToolbar from './components/ProjectToolbar'
+import ProjectSummary from './components/ProjectSummary'
 
 const DEFAULT_EDITOR = {
   open: false,
@@ -50,13 +51,60 @@ const extractList = (response, resourceKey) => {
   return candidates.find(Array.isArray) || []
 }
 
+const extractPagination = (response) => {
+  if (!response || typeof response !== 'object') return {}
+
+  const sourceCandidates = [response, response?.data, response?.meta, response?.pagination, response?.data?.meta, response?.data?.pagination]
+
+  const pick = (keys) => {
+    for (const src of sourceCandidates) {
+      if (!src) continue
+      for (const key of keys) {
+        const val = src[key]
+        if (val !== undefined && val !== null) return val
+      }
+    }
+    return undefined
+  }
+
+  const page = Number(pick(['page', 'currentPage', 'pageNumber']))
+  const limit = Number(pick(['limit', 'pageSize', 'perPage']))
+  const total = Number(pick(['total', 'count', 'totalItems', 'total_count']))
+  const totalPages = Number(pick(['totalPages', 'pages', 'total_pages']))
+
+  return {
+    page: Number.isFinite(page) ? page : undefined,
+    limit: Number.isFinite(limit) ? limit : undefined,
+    total: Number.isFinite(total) ? total : undefined,
+    totalPages: Number.isFinite(totalPages) ? totalPages : undefined,
+  }
+}
+
 const normalizeProject = (project) => {
   if (!project || typeof project !== 'object') return null
+  const departmentObj = project?.department || project?.departmentObject || null
+  const creator = project?.createdBy || project?.created_by || project?.createdById || project?.createdByName || null
+
+  const getCreatorName = (c) => {
+    if (!c || typeof c !== 'object') return typeof c === 'string' ? c : ''
+    const first = c.firstName || c.first_name || c.first || ''
+    const last = c.lastName || c.last_name || c.last || ''
+    const name = `${first} ${last}`.trim()
+    return name || c.name || c.email || ''
+  }
+
   return {
     id: getEntityId(project),
     name: project?.name || project?.projectName || 'Untitled Project',
     description: project?.description || project?.details || '',
     status: project?.status || 'PLANNING',
+    departmentId: getEntityId(departmentObj) || project?.departmentId || project?.department_id || '',
+    departmentName: departmentObj?.name || project?.departmentName || project?.department || '',
+    owner: getCreatorName(creator),
+    startDate: project?.startDate || project?.start_date || null,
+    endDate: project?.endDate || project?.end_date || null,
+    createdAt: project?.createdAt || project?.created_at || null,
+    isActive: project?.isActive !== undefined ? Boolean(project.isActive) : true,
     raw: project,
   }
 }
@@ -103,6 +151,13 @@ const normalizeUser = (user) => {
 
 export default function Projects() {
   const [projects, setProjects] = useState([])
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [total, setTotal] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const [departmentId, setDepartmentId] = useState('')
+  const [sortBy, setSortBy] = useState('createdAt')
+  const [sortOrder, setSortOrder] = useState('DESC')
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [loading, setLoading] = useState(true)
@@ -124,14 +179,15 @@ export default function Projects() {
     try {
       setLoading(true)
       const params = {
-        page: 1,
-        limit: 100,
-        sortBy: 'createdAt',
-        sortOrder: 'DESC',
+        page,
+        limit,
+        sortBy,
+        sortOrder,
       }
 
       if (search.trim()) params.search = search.trim()
       if (status) params.status = status
+      if (departmentId) params.departmentId = departmentId
 
       const response = await projectsService.list(params)
       const rawItems = extractList(response, 'projects')
@@ -140,13 +196,22 @@ export default function Projects() {
         .filter((item) => item && item.id)
 
       setProjects(normalized)
+
+      const { page: respPage, limit: respLimit, total: respTotal, totalPages: respTotalPages } = extractPagination(response)
+      if (respTotal !== undefined) setTotal(Number(respTotal) || 0)
+      else setTotal(normalized.length || 0)
+
+      if (respTotalPages !== undefined) setTotalPages(Number(respTotalPages) || 1)
+      else if (respLimit || limit) setTotalPages(Math.max(1, Math.ceil((respTotal || normalized.length || 0) / (respLimit || limit))))
     } catch (error) {
       toast.error('Failed to load projects', getErrorMessage(error, 'Failed to load projects.'))
       setProjects([])
+      setTotal(0)
+      setTotalPages(1)
     } finally {
       setLoading(false)
     }
-  }, [search, status])
+  }, [search, status, page, limit, departmentId, sortBy, sortOrder])
 
   const fetchReferenceData = useCallback(async () => {
     try {
@@ -176,6 +241,10 @@ export default function Projects() {
     fetchProjects()
     fetchReferenceData()
   }, [fetchProjects, fetchReferenceData])
+
+  useEffect(() => {
+    if (totalPages && page > totalPages) setPage(totalPages)
+  }, [totalPages, page])
 
   const openCreate = async () => {
     // Ensure reference lists are loaded before opening the create modal
@@ -238,14 +307,16 @@ export default function Projects() {
   }
 
   const visibleProjects = useMemo(() => {
-    if (!search.trim()) return projects
+    let items = projects
+    if (departmentId) items = items.filter((p) => String(p.departmentId) === String(departmentId))
+    if (!search.trim()) return items
     const query = search.trim().toLowerCase()
-    return projects.filter((project) => (
+    return items.filter((project) => (
       project.name?.toLowerCase().includes(query)
       || project.description?.toLowerCase().includes(query)
       || project.status?.toLowerCase().includes(query)
     ))
-  }, [projects, search])
+  }, [projects, search, departmentId])
 
   return (
     <div className="flex flex-col gap-6">
@@ -264,24 +335,83 @@ export default function Projects() {
         </button>
       </div>
 
+      <ProjectSummary
+        projects={projects}
+        total={total}
+        departments={departments}
+        teams={teams}
+        users={users}
+        onRefresh={fetchProjects}
+      />
+
       <ProjectToolbar
         search={search}
         status={status}
+        departmentId={departmentId}
+        departments={departments}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
         loading={loading}
-        onSearchChange={setSearch}
+        onSearchChange={(value) => { setSearch(value); setPage(1) }}
         onFilterChange={(field, value) => {
-          if (field === 'status') setStatus(value)
+          if (field === 'status') { setStatus(value); setPage(1) }
+          if (field === 'department') { setDepartmentId(value); setPage(1) }
+          if (field === 'sortBy') { setSortBy(value); setPage(1) }
+          if (field === 'sortOrder') { setSortOrder(value); setPage(1) }
         }}
         onRefresh={fetchProjects}
       />
 
       <ProjectTable
         projects={visibleProjects}
+        total={total}
         loading={loading}
         deletingId={deleteTarget?.id}
         onView={viewProject}
         onDelete={setDeleteTarget}
       />
+
+      <div className="flex items-center justify-between gap-4">
+        <div className="text-sm text-ink-muted">
+          {total > 0 ? (
+            <>Showing {Math.max(1, (page - 1) * limit + 1)}&nbsp;-&nbsp;{Math.min(page * limit, total)} of {total}</>
+          ) : (
+            <>No projects to display</>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <select
+            value={limit}
+            onChange={(e) => { setLimit(Number(e.target.value)); setPage(1) }}
+            className="rounded-xl border border-surface-200 bg-white px-3 py-1 text-sm text-ink-muted"
+          >
+            {[10, 20, 50, 100].map((opt) => (
+              <option key={opt} value={opt}>{opt} / page</option>
+            ))}
+          </select>
+
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className="rounded-xl border px-3 py-1 text-sm text-ink-muted disabled:opacity-50"
+          >
+            Prev
+          </button>
+
+          <div className="px-2 text-sm text-ink-muted">{page} / {totalPages || 1}</div>
+
+          <button
+            type="button"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page >= (totalPages || 1)}
+            className="rounded-xl border px-3 py-1 text-sm text-ink-muted disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      </div>
 
       <ProjectFormModal
         open={editor.open}
