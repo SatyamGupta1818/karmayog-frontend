@@ -103,6 +103,7 @@ const normalizeProject = (project) => {
     owner: getCreatorName(creator),
     startDate: project?.startDate || project?.start_date || null,
     endDate: project?.endDate || project?.end_date || null,
+    budgetMinutes: Number(project?.budgetMinutes || 0),
     createdAt: project?.createdAt || project?.created_at || null,
     isActive: project?.isActive !== undefined ? Boolean(project.isActive) : true,
     raw: project,
