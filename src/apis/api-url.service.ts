@@ -66,13 +66,61 @@ export const PROJECT_URLS = {
 
 const TASKS = '/tasks';
 export const TASK_URLS = {
-    list: TASKS,
-    create: TASKS,
+    create: `${TASKS}/create`,
+    list: `${TASKS}/list`,
     getById: (id: string) => `${TASKS}/${id}`,
-    update: (id: string) => `${TASKS}/${id}`,
-    delete: (id: string) => `${TASKS}/${id}`,
-    updateStatus: (id: string) => `${TASKS}/${id}/status`,
-    byProject: (projectId: string) => `${PROJECTS}/${projectId}/tasks`,
+    update: (id: string) => `${TASKS}/update/${id}`,
+    delete: (id: string) => `${TASKS}/delete/${id}`,
+} as const;
+
+// Workspace Execution
+
+const FEATURES = '/features';
+export const FEATURE_URLS = {
+    create: `${FEATURES}/create`,
+    list: `${FEATURES}/list`,
+    getById: (id: string) => `${FEATURES}/${id}`,
+    update: (id: string) => `${FEATURES}/update/${id}`,
+    delete: (id: string) => `${FEATURES}/delete/${id}`,
+} as const;
+
+const SUBTASKS = '/subtasks';
+export const SUBTASK_URLS = {
+    create: `${SUBTASKS}/create`,
+    list: `${SUBTASKS}/list`,
+    getById: (id: string) => `${SUBTASKS}/${id}`,
+    update: (id: string) => `${SUBTASKS}/update/${id}`,
+    delete: (id: string) => `${SUBTASKS}/delete/${id}`,
+} as const;
+
+const ISSUES = '/issues';
+export const ISSUE_URLS = {
+    create: `${ISSUES}/create`,
+    list: `${ISSUES}/list`,
+    getById: (id: string) => `${ISSUES}/${id}`,
+    update: (id: string) => `${ISSUES}/update/${id}`,
+    delete: (id: string) => `${ISSUES}/delete/${id}`,
+} as const;
+
+const COMMENTS = '/comments';
+export const COMMENT_URLS = {
+    create: `${COMMENTS}/create`,
+    list: `${COMMENTS}/list`,
+    getById: (id: string) => `${COMMENTS}/${id}`,
+    update: (id: string) => `${COMMENTS}/update/${id}`,
+    delete: (id: string) => `${COMMENTS}/delete/${id}`,
+} as const;
+
+const WORK_LOGS = '/work-logs';
+export const WORK_LOG_URLS = {
+    create: `${WORK_LOGS}/create`,
+    list: `${WORK_LOGS}/list`,
+    getById: (id: string) => `${WORK_LOGS}/${id}`,
+    update: (id: string) => `${WORK_LOGS}/update/${id}`,
+    delete: (id: string) => `${WORK_LOGS}/delete/${id}`,
+    daily: `${WORK_LOGS}/daily`,
+    weekly: `${WORK_LOGS}/weekly`,
+    monthly: `${WORK_LOGS}/monthly`,
 } as const;
 
 // ─── RBAC Base ────────────────────────────────────────────────────────────────
@@ -158,7 +206,12 @@ export const API_URLS = {
     users: USER_URLS,
     org: ORG_URLS,
     projects: PROJECT_URLS,
+    features: FEATURE_URLS,
     tasks: TASK_URLS,
+    subtasks: SUBTASK_URLS,
+    issues: ISSUE_URLS,
+    comments: COMMENT_URLS,
+    workLogs: WORK_LOG_URLS,
     modules: MODULE_URLS,
     roles: ROLE_URLS,
     permissions: PERMISSION_URLS,
