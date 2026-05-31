@@ -26,9 +26,15 @@ const Dashboard = lazy(() => import('../pages/dashboard'))
 const ProjectsIndex = lazy(() => import('../pages/projects'))
 const ProjectDetails = lazy(() => import('../pages/projects/ProjectDetails'))
 const AdministrationIndex = lazy(() => import('../pages/administrator'))
-const Tasks = lazy(() => import('../pages/projects/Tasks'))
-const Epics = lazy(() => import('../pages/projects/Epics'))
-const Stories = lazy(() => import('../pages/projects/Stories'))
+const Features = lazy(() => import('../pages/workspace/Features'))
+const FeatureDetails = lazy(() => import('../pages/workspace/FeatureDetails'))
+const Tasks = lazy(() => import('../pages/workspace/Tasks'))
+const TaskDetails = lazy(() => import('../pages/workspace/TaskDetails'))
+const Issues = lazy(() => import('../pages/workspace/Issues'))
+const IssueDetails = lazy(() => import('../pages/workspace/IssueDetails'))
+const Comments = lazy(() => import('../pages/workspace/Comments'))
+const KanbanBoard = lazy(() => import('../pages/workspace/KanbanBoard'))
+const WorkTimesheet = lazy(() => import('../pages/workspace/WorkTimesheet'))
 const Users = lazy(() => import('../pages/users'))
 const Departments = lazy(() => import('../pages/departments'))
 const Organizations = lazy(() => import('../pages/organizations'))
@@ -57,9 +63,33 @@ export const routeConfig = [
           { path: 'details', element: ProjectDetails, moduleKey: 'projects' },
         ],
       },
-      { path: 'tasks', element: Tasks, moduleKey: 'projects' },
-      { path: 'epics', element: Epics, moduleKey: 'projects' },
-      { path: 'stories', element: Stories, moduleKey: 'projects' },
+      {
+        path: 'features',
+        element: Features,
+        moduleKey: 'features',
+        children: [
+          { path: 'details', element: FeatureDetails, moduleKey: 'features' },
+        ],
+      },
+      {
+        path: 'tasks',
+        element: Tasks,
+        moduleKey: 'tasks',
+        children: [
+          { path: 'details', element: TaskDetails, moduleKey: 'tasks' },
+        ],
+      },
+      {
+        path: 'issues',
+        element: Issues,
+        moduleKey: 'issues',
+        children: [
+          { path: 'details', element: IssueDetails, moduleKey: 'issues' },
+        ],
+      },
+      { path: 'comments', element: Comments, moduleKey: 'comments' },
+      { path: 'kanban', element: KanbanBoard, moduleKey: 'kanban' },
+      { path: 'work-timesheet', element: WorkTimesheet, moduleKey: 'work-timesheet' },
     ],
   },
   {
