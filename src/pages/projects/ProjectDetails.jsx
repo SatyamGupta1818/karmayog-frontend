@@ -7,6 +7,7 @@ import departmentService from '../../apis/services/departments/department.servic
 import teamService from '../../apis/services/departments/team.service'
 import userService from '../../apis/services/users/user.service'
 import ProjectFormModal from './components/ProjectFormModal'
+import CommentsPanel from '../workspace/components/CommentsPanel'
 
 const getEntityId = (entity) => {
   if (!entity) return ''
@@ -24,6 +25,7 @@ const normalizeProject = (project) => {
     status: project?.status || 'PLANNING',
     startDate: project?.startDate || project?.start_date || '',
     endDate: project?.endDate || project?.end_date || '',
+    budgetMinutes: Number(project?.budgetMinutes || 0),
     departmentId: project?.departmentId || project?.department_id || '',
     teamIds: Array.isArray(project?.teamIds) ? project.teamIds : project?.teamIds || [],
     memberIds: Array.isArray(project?.memberIds) ? project.memberIds : project?.memberIds || [],
@@ -46,6 +48,15 @@ const formatDate = (value) => {
     month: 'short',
     year: 'numeric',
   })
+}
+
+const formatMinutes = (value) => {
+  const minutes = Number(value) || 0
+  const hours = Math.floor(minutes / 60)
+  const remaining = minutes % 60
+  if (hours > 0 && remaining > 0) return `${hours}h ${remaining}m`
+  if (hours > 0) return `${hours}h`
+  return `${remaining}m`
 }
 
 export default function ProjectDetails() {
@@ -324,6 +335,10 @@ export default function ProjectDetails() {
               <p className="text-xs uppercase tracking-wider text-ink-muted">Department</p>
               <p className="mt-1 text-ink">{project.raw?.department?.name || (departments.find((d) => d.id === project.departmentId)?.name) || project.departmentId || 'Not set'}</p>
             </div>
+            <div>
+              <p className="text-xs uppercase tracking-wider text-ink-muted">Budget</p>
+              <p className="mt-1 text-ink">{formatMinutes(project.budgetMinutes)}</p>
+            </div>
           </div>
         </div>
 
@@ -373,6 +388,12 @@ export default function ProjectDetails() {
         departments={departments}
         teams={teams}
         users={users}
+      />
+
+      <CommentsPanel
+        targetType="PROJECT"
+        targetId={project.id}
+        title="Project Comments"
       />
     </div>
   )

@@ -14,6 +14,7 @@ const EMPTY_FORM = {
   status: 'PLANNING',
   startDate: '',
   endDate: '',
+  budgetMinutes: 0,
   departmentId: '',
   teamIds: [],
   memberIds: [],
@@ -54,6 +55,7 @@ export default function ProjectFormModal({
       status: project?.status || 'PLANNING',
       startDate: project?.startDate ? String(project.startDate).slice(0, 10) : '',
       endDate: project?.endDate ? String(project.endDate).slice(0, 10) : '',
+      budgetMinutes: Number(project?.budgetMinutes || 0),
       departmentId: project?.departmentId || '',
       teamIds: normalizeArrayValue(project?.teamIds),
       memberIds: normalizeArrayValue(project?.memberIds),
@@ -92,6 +94,14 @@ export default function ProjectFormModal({
       toast.warning('Validation Error', 'Project name is required.')
       return
     }
+    if (form.startDate && form.endDate && new Date(form.endDate).getTime() < new Date(form.startDate).getTime()) {
+      toast.warning('Validation Error', 'End date cannot be before start date.')
+      return
+    }
+    if (Number(form.budgetMinutes) < 0) {
+      toast.warning('Validation Error', 'Budget minutes must be zero or positive.')
+      return
+    }
 
     const payload = {
       name: form.name.trim(),
@@ -99,6 +109,7 @@ export default function ProjectFormModal({
       status: form.status,
       startDate: form.startDate || undefined,
       endDate: form.endDate || undefined,
+      budgetMinutes: Number(form.budgetMinutes || 0),
       departmentId: form.departmentId || undefined,
       teamIds: form.teamIds.length > 0 ? form.teamIds : undefined,
       memberIds: form.memberIds.length > 0 ? form.memberIds : undefined,
@@ -217,6 +228,16 @@ export default function ProjectFormModal({
                 type="date"
                 value={form.endDate}
                 onChange={(event) => handleChange('endDate', event.target.value)}
+                className="w-full rounded-xl border border-surface-200 bg-white px-3 py-2.5 text-sm text-ink transition-all focus:border-blue-500/40 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-ink-muted">Budget Minutes</label>
+              <input
+                type="number"
+                min="0"
+                value={form.budgetMinutes}
+                onChange={(event) => handleChange('budgetMinutes', event.target.value)}
                 className="w-full rounded-xl border border-surface-200 bg-white px-3 py-2.5 text-sm text-ink transition-all focus:border-blue-500/40 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               />
             </div>

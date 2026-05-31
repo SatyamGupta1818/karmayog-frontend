@@ -24,6 +24,14 @@ export default function ProjectTable({
     if (Number.isNaN(d.getTime())) return '-'
     return d.toLocaleDateString()
   }
+  const formatMinutes = (value) => {
+    const minutes = Number(value) || 0
+    const hours = Math.floor(minutes / 60)
+    const remaining = minutes % 60
+    if (hours > 0 && remaining > 0) return `${hours}h ${remaining}m`
+    if (hours > 0) return `${hours}h`
+    return `${remaining}m`
+  }
   return (
     <div className="min-w-0 overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card">
       <div className="flex items-center justify-between border-b border-surface-100 bg-surface-100/50 px-5 py-3.5">
@@ -43,6 +51,7 @@ export default function ProjectTable({
               <th className="w-28 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">Status</th>
               <th className="w-24 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">Start</th>
               <th className="w-24 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">End</th>
+              <th className="w-28 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">Budget</th>
               <th className="min-w-[160px] px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink-muted">Owner</th>
               <th className="w-32 px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-ink-muted">Actions</th>
             </tr>
@@ -50,14 +59,14 @@ export default function ProjectTable({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={4} className="py-16 text-center">
+                <td colSpan={9} className="py-16 text-center">
                   <Loader2 size={24} className="mx-auto mb-2 animate-spin text-amber-500" />
                   <p className="text-sm text-ink-muted">Loading projects...</p>
                 </td>
               </tr>
             ) : projects.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-6 py-16 text-center">
+                <td colSpan={9} className="px-6 py-16 text-center">
                   <p className="text-sm font-medium text-ink">No projects found</p>
                   <p className="mt-1 text-xs text-ink-muted">Create a new project or adjust the filters.</p>
                 </td>
@@ -93,6 +102,9 @@ export default function ProjectTable({
                     </td>
                     <td className="px-5 py-4">
                       <p className="text-sm text-ink-muted">{formatDate(project.endDate)}</p>
+                    </td>
+                    <td className="px-5 py-4">
+                      <p className="text-sm text-ink-muted">{formatMinutes(project.budgetMinutes)}</p>
                     </td>
                     <td className="px-5 py-4">
                       <p className="text-sm text-ink-muted">{project.owner || '-'}</p>
