@@ -86,16 +86,15 @@ function filterNavByPermission(navConfig, modules, isSuperAdmin) {
           if (item.superAdminOnly) return null
 
           // Extract moduleKey fallback (e.g., "/users" → "users")
-          const itemKey = item.path.replace(/^\//, '').split('/')[0]
+          const itemKey = item.moduleKey || item.path.replace(/^\//, '').split('/')[0]
 
           // If item has children, filter children first
           if (item.children && item.children.length > 0) {
             const filteredChildren = item.children.filter((child) => {
               if (child.superAdminOnly) return false
 
-              const childKey = child.path.replace(/^\//, '').split('/').pop()
-              // Show child if they explicitly have access to the child, OR if they have access to the parent module
-              return hasAccess(child.path, childKey) || hasAccess(item.path, itemKey)
+              const childKey = child.moduleKey || child.path.replace(/^\//, '').split('/').pop()
+              return hasAccess(child.path, childKey)
             })
 
             // Keep parent if it has accessible children
