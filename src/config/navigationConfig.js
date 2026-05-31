@@ -48,10 +48,13 @@ export const navigationConfig = [
         icon: 'FolderKanban',
         // Children create a collapsible nested menu
         children: [
-          { name: 'Projects', path: '/workspace/projects', icon: 'Folder' },
-          { name: 'Epics', path: '/workspace/epics', icon: 'Zap' },
-          { name: 'Stories', path: '/workspace/stories', icon: 'BookOpen' },
-          { name: 'Tasks', path: '/workspace/tasks', icon: 'CheckSquare' },
+          { name: 'Projects', path: '/workspace/projects', icon: 'Folder', moduleKey: 'projects' },
+          { name: 'Features', path: '/workspace/features', icon: 'Flag', moduleKey: 'features' },
+          { name: 'Tasks', path: '/workspace/tasks', icon: 'CheckSquare', moduleKey: 'tasks' },
+          { name: 'Issues', path: '/workspace/issues', icon: 'Bug', moduleKey: 'issues' },
+          { name: 'Comments', path: '/workspace/comments', icon: 'MessageSquare', moduleKey: 'comments' },
+          { name: 'Kanban Board', path: '/workspace/kanban', icon: 'Columns3', moduleKey: 'kanban' },
+          { name: 'Work Timesheet', path: '/workspace/work-timesheet', icon: 'Timer', moduleKey: 'work-timesheet' },
         ],
       },
     ],
