@@ -22,6 +22,7 @@ export interface ProjectPayload {
     status?: string;
     startDate?: string | Date;
     endDate?: string | Date;
+    budgetMinutes?: number;
     departmentId?: string;
     teamIds?: string[];
     memberIds?: string[];
