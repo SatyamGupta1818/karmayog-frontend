@@ -10,6 +10,7 @@ import subtasksService from '../../apis/services/workspace/subtasks.service'
 import tasksService from '../../apis/services/workspace/tasks.service'
 import CommentsPanel from './components/CommentsPanel'
 import IssueFormModal from './components/IssueFormModal'
+import PermissionGuard from '../../components/common/PermissionGuard'
 import {
   Badge,
   ConfirmModal,
@@ -195,6 +196,7 @@ export default function Issues() {
         actionLabel="New Issue"
         actionIcon="Bug"
         onAction={() => setEditor({ open: true, mode: 'create', issue: null })}
+        actionPermission="issues.CREATE"
       />
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -302,40 +304,44 @@ export default function Issues() {
                       >
                         <MessageSquare size={15} />
                       </button>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          handleResolve(issue)
-                        }}
-                        disabled={issue.status === 'RESOLVED' || issue.status === 'CLOSED' || resolvingId === issue.id}
-                        className="rounded-lg p-2 text-ink-muted transition hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-40"
-                        title="Resolve issue"
-                      >
-                        {resolvingId === issue.id ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          setEditor({ open: true, mode: 'edit', issue })
-                        }}
-                        className="rounded-lg p-2 text-ink-muted transition hover:bg-blue-50 hover:text-blue-600"
-                        title="Edit issue"
-                      >
-                        <Edit3 size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          setDeleteTarget(issue)
-                        }}
-                        className="rounded-lg p-2 text-ink-muted transition hover:bg-red-50 hover:text-red-600"
-                        title="Delete issue"
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                      <PermissionGuard permission="issues.UPDATE">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handleResolve(issue)
+                          }}
+                          disabled={issue.status === 'RESOLVED' || issue.status === 'CLOSED' || resolvingId === issue.id}
+                          className="rounded-lg p-2 text-ink-muted transition hover:bg-emerald-50 hover:text-emerald-600 disabled:opacity-40"
+                          title="Resolve issue"
+                        >
+                          {resolvingId === issue.id ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setEditor({ open: true, mode: 'edit', issue })
+                          }}
+                          className="rounded-lg p-2 text-ink-muted transition hover:bg-blue-50 hover:text-blue-600"
+                          title="Edit issue"
+                        >
+                          <Edit3 size={15} />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="issues.DELETE">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setDeleteTarget(issue)
+                          }}
+                          className="rounded-lg p-2 text-ink-muted transition hover:bg-red-50 hover:text-red-600"
+                          title="Delete issue"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </PermissionGuard>
                     </div>
                   </td>
                 </tr>

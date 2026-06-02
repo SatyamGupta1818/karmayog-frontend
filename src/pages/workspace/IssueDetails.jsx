@@ -11,6 +11,7 @@ import tasksService from '../../apis/services/workspace/tasks.service'
 import CommentsPanel from './components/CommentsPanel'
 import IssueFormModal from './components/IssueFormModal'
 import { Badge, MetricCard } from './components/WorkspacePrimitives'
+import PermissionGuard from '../../components/common/PermissionGuard'
 import {
   extractEntity,
   extractList,
@@ -145,23 +146,25 @@ export default function IssueDetails() {
           <p className="mt-1 text-sm text-ink-muted">Issue details, full reproduction notes, resolution, and comments.</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={handleResolve}
-            disabled={resolving || issue.status === 'RESOLVED' || issue.status === 'CLOSED'}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
-          >
-            {resolving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-            Resolve
-          </button>
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-          >
-            <Edit3 size={16} />
-            Edit Issue
-          </button>
+          <PermissionGuard permission="issue details.UPDATE">
+            <button
+              type="button"
+              onClick={handleResolve}
+              disabled={resolving || issue.status === 'RESOLVED' || issue.status === 'CLOSED'}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
+            >
+              {resolving ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+              Resolve
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              <Edit3 size={16} />
+              Edit Issue
+            </button>
+          </PermissionGuard>
         </div>
       </div>
 
