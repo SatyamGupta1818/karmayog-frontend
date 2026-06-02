@@ -7,6 +7,7 @@ import featuresService from '../../apis/services/workspace/features.service'
 import tasksService from '../../apis/services/workspace/tasks.service'
 import CommentsPanel from './components/CommentsPanel'
 import TaskFormModal from './components/TaskFormModal'
+import PermissionGuard from '../../components/common/PermissionGuard'
 import {
   Badge,
   ConfirmModal,
@@ -158,6 +159,7 @@ export default function Tasks() {
         actionLabel="New Task"
         actionIcon="CheckSquare"
         onAction={() => setEditor({ open: true, mode: 'create', task: null })}
+        actionPermission="tasks.CREATE"
       />
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -258,28 +260,32 @@ export default function Tasks() {
                       >
                         <MessageSquare size={15} />
                       </button>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          setEditor({ open: true, mode: 'edit', task })
-                        }}
-                        className="rounded-lg p-2 text-ink-muted transition hover:bg-blue-50 hover:text-blue-600"
-                        title="Edit task"
-                      >
-                        <Edit3 size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          setDeleteTarget(task)
-                        }}
-                        className="rounded-lg p-2 text-ink-muted transition hover:bg-red-50 hover:text-red-600"
-                        title="Delete task"
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                      <PermissionGuard permission="tasks.UPDATE">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setEditor({ open: true, mode: 'edit', task })
+                          }}
+                          className="rounded-lg p-2 text-ink-muted transition hover:bg-blue-50 hover:text-blue-600"
+                          title="Edit task"
+                        >
+                          <Edit3 size={15} />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="tasks.DELETE">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setDeleteTarget(task)
+                          }}
+                          className="rounded-lg p-2 text-ink-muted transition hover:bg-red-50 hover:text-red-600"
+                          title="Delete task"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </PermissionGuard>
                     </div>
                   </td>
                 </tr>

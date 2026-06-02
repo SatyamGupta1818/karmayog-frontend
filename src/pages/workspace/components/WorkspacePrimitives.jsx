@@ -1,5 +1,6 @@
 import * as Icons from 'lucide-react'
 import { Loader2, Search, X } from 'lucide-react'
+import PermissionGuard from '../../../components/common/PermissionGuard'
 
 export function WorkspacePageHeader({
   title,
@@ -7,6 +8,7 @@ export function WorkspacePageHeader({
   actionLabel,
   actionIcon = 'Plus',
   onAction,
+  actionPermission,
   meta,
 }) {
   const ActionIcon = Icons[actionIcon] || Icons.Plus
@@ -21,14 +23,27 @@ export function WorkspacePageHeader({
         {description && <p className="mt-1 max-w-3xl text-sm text-ink-muted">{description}</p>}
       </div>
       {actionLabel && (
-        <button
-          type="button"
-          onClick={onAction}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/15 transition hover:bg-blue-700 disabled:opacity-60"
-        >
-          <ActionIcon size={16} />
-          {actionLabel}
-        </button>
+        actionPermission ? (
+          <PermissionGuard permission={actionPermission}>
+            <button
+              type="button"
+              onClick={onAction}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/15 transition hover:bg-blue-700 disabled:opacity-60"
+            >
+              <ActionIcon size={16} />
+              {actionLabel}
+            </button>
+          </PermissionGuard>
+        ) : (
+          <button
+            type="button"
+            onClick={onAction}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-600/15 transition hover:bg-blue-700 disabled:opacity-60"
+          >
+            <ActionIcon size={16} />
+            {actionLabel}
+          </button>
+        )
       )}
     </div>
   )

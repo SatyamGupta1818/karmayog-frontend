@@ -8,6 +8,7 @@ import tasksService from '../../apis/services/workspace/tasks.service'
 import CommentsPanel from './components/CommentsPanel'
 import TaskFormModal from './components/TaskFormModal'
 import { Badge, MetricCard } from './components/WorkspacePrimitives'
+import PermissionGuard from '../../components/common/PermissionGuard'
 import {
   extractEntity,
   extractList,
@@ -110,14 +111,16 @@ export default function TaskDetails() {
           <h2 className="text-2xl font-semibold text-ink">{task.title}</h2>
           <p className="mt-1 text-sm text-ink-muted">Task details, long-form guidance, and comments.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-        >
-          <Edit3 size={16} />
-          Edit Task
-        </button>
+        <PermissionGuard permission="task details.UPDATE">
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+          >
+            <Edit3 size={16} />
+            Edit Task
+          </button>
+        </PermissionGuard>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
