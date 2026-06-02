@@ -8,6 +8,7 @@ import teamService from '../../apis/services/departments/team.service'
 import userService from '../../apis/services/users/user.service'
 import ProjectFormModal from './components/ProjectFormModal'
 import CommentsPanel from '../workspace/components/CommentsPanel'
+import PermissionGuard from '../../components/common/PermissionGuard'
 
 const getEntityId = (entity) => {
   if (!entity) return ''
@@ -223,96 +224,98 @@ export default function ProjectDetails() {
           <h2 className="text-2xl font-semibold text-ink">{project.name}</h2>
           <p className="mt-1 text-sm text-ink-muted">Review the project details and update as needed.</p>
         </div>
-        <button
-          type="button"
-          onClick={async () => {
-            // Ensure reference lists are loaded before opening the edit modal
-            if (departments.length === 0 || teams.length === 0 || users.length === 0) {
-              try {
-                const [departmentsResponse, teamsResponse, usersResponse] = await Promise.all([
-                  departmentService.list({ page: 1, limit: 200 }),
-                  teamService.list({ page: 1, limit: 200 }),
-                  userService.list({ page: 1, limit: 200 }),
-                ])
+        <PermissionGuard permission="project details.UPDATE">
+          <button
+            type="button"
+            onClick={async () => {
+              // Ensure reference lists are loaded before opening the edit modal
+              if (departments.length === 0 || teams.length === 0 || users.length === 0) {
+                try {
+                  const [departmentsResponse, teamsResponse, usersResponse] = await Promise.all([
+                    departmentService.list({ page: 1, limit: 200 }),
+                    teamService.list({ page: 1, limit: 200 }),
+                    userService.list({ page: 1, limit: 200 }),
+                  ])
 
-                const rawDepartments = Array.isArray(departmentsResponse?.departments)
-                  ? departmentsResponse.departments
-                  : Array.isArray(departmentsResponse?.data)
-                  ? departmentsResponse.data
-                  : Array.isArray(departmentsResponse)
-                  ? departmentsResponse
-                  : []
+                  const rawDepartments = Array.isArray(departmentsResponse?.departments)
+                    ? departmentsResponse.departments
+                    : Array.isArray(departmentsResponse?.data)
+                    ? departmentsResponse.data
+                    : Array.isArray(departmentsResponse)
+                    ? departmentsResponse
+                    : []
 
-                const rawTeams = Array.isArray(teamsResponse?.teams)
-                  ? teamsResponse.teams
-                  : Array.isArray(teamsResponse?.data)
-                  ? teamsResponse.data
-                  : Array.isArray(teamsResponse)
-                  ? teamsResponse
-                  : []
+                  const rawTeams = Array.isArray(teamsResponse?.teams)
+                    ? teamsResponse.teams
+                    : Array.isArray(teamsResponse?.data)
+                    ? teamsResponse.data
+                    : Array.isArray(teamsResponse)
+                    ? teamsResponse
+                    : []
 
-                const rawUsers = Array.isArray(usersResponse?.users)
-                  ? usersResponse.users
-                  : Array.isArray(usersResponse?.data)
-                  ? usersResponse.data
-                  : Array.isArray(usersResponse)
-                  ? usersResponse
-                  : []
+                  const rawUsers = Array.isArray(usersResponse?.users)
+                    ? usersResponse.users
+                    : Array.isArray(usersResponse?.data)
+                    ? usersResponse.data
+                    : Array.isArray(usersResponse)
+                    ? usersResponse
+                    : []
 
-                const getEntityIdGeneric = (entity, fallbackKey) => {
-                  if (!entity) return ''
-                  const keys = [fallbackKey, 'id', 'departmentId', 'teamId', 'userId', '_id', 'uuid'].filter(Boolean)
-                  const value = keys.map((key) => entity?.[key]).find((candidate) => candidate !== undefined && candidate !== null)
-                  return value !== undefined && value !== null ? String(value) : ''
-                }
-
-                const normalizeDepartment = (department) => ({
-                  id: getEntityIdGeneric(department, 'departmentId'),
-                  name: department?.name || department?.departmentName || 'Untitled Department',
-                  raw: department,
-                })
-
-                const resolveTeamDepartmentId = (team) => {
-                  const direct = team?.departmentId || team?.department_id
-                  if (direct !== undefined && direct !== null) return String(direct)
-                  const nested = team?.department || team?.departmentObject
-                  return getEntityIdGeneric(nested, 'departmentId')
-                }
-
-                const normalizeTeam = (team) => ({
-                  id: getEntityIdGeneric(team, 'teamId'),
-                  departmentId: resolveTeamDepartmentId(team),
-                  name: team?.name || team?.teamName || 'Untitled Team',
-                  raw: team,
-                })
-
-                const normalizeUser = (user) => {
-                  const firstName = user?.firstName || user?.first_name || ''
-                  const lastName = user?.lastName || user?.last_name || ''
-                  const fullName = `${firstName} ${lastName}`.trim() || user?.name || user?.email || 'Untitled User'
-                  return {
-                    id: getEntityIdGeneric(user, 'userId'),
-                    name: fullName,
-                    email: user?.email || '',
-                    raw: user,
+                  const getEntityIdGeneric = (entity, fallbackKey) => {
+                    if (!entity) return ''
+                    const keys = [fallbackKey, 'id', 'departmentId', 'teamId', 'userId', '_id', 'uuid'].filter(Boolean)
+                    const value = keys.map((key) => entity?.[key]).find((candidate) => candidate !== undefined && candidate !== null)
+                    return value !== undefined && value !== null ? String(value) : ''
                   }
+
+                  const normalizeDepartment = (department) => ({
+                    id: getEntityIdGeneric(department, 'departmentId'),
+                    name: department?.name || department?.departmentName || 'Untitled Department',
+                    raw: department,
+                  })
+
+                  const resolveTeamDepartmentId = (team) => {
+                    const direct = team?.departmentId || team?.department_id
+                    if (direct !== undefined && direct !== null) return String(direct)
+                    const nested = team?.department || team?.departmentObject
+                    return getEntityIdGeneric(nested, 'departmentId')
+                  }
+
+                  const normalizeTeam = (team) => ({
+                    id: getEntityIdGeneric(team, 'teamId'),
+                    departmentId: resolveTeamDepartmentId(team),
+                    name: team?.name || team?.teamName || 'Untitled Team',
+                    raw: team,
+                  })
+
+                  const normalizeUser = (user) => {
+                    const firstName = user?.firstName || user?.first_name || ''
+                    const lastName = user?.lastName || user?.last_name || ''
+                    const fullName = `${firstName} ${lastName}`.trim() || user?.name || user?.email || 'Untitled User'
+                    return {
+                      id: getEntityIdGeneric(user, 'userId'),
+                      name: fullName,
+                      email: user?.email || '',
+                      raw: user,
+                    }
+                  }
+
+                  setDepartments(rawDepartments.map(normalizeDepartment).filter((d) => d.id))
+                  setTeams(rawTeams.map(normalizeTeam).filter((t) => t.id))
+                  setUsers(rawUsers.map(normalizeUser).filter((u) => u.id))
+                } catch (error) {
+                  toast.error('Failed to load reference data', getErrorMessage(error, 'Failed to load departments, teams, or users.'))
                 }
-
-                setDepartments(rawDepartments.map(normalizeDepartment).filter((d) => d.id))
-                setTeams(rawTeams.map(normalizeTeam).filter((t) => t.id))
-                setUsers(rawUsers.map(normalizeUser).filter((u) => u.id))
-              } catch (error) {
-                toast.error('Failed to load reference data', getErrorMessage(error, 'Failed to load departments, teams, or users.'))
               }
-            }
 
-            setEditing(true)
-          }}
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition hover:shadow-lg"
-        >
-          <Edit3 size={16} />
-          Edit project
-        </button>
+              setEditing(true)
+            }}
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition hover:shadow-lg"
+          >
+            <Edit3 size={16} />
+            Edit project
+          </button>
+        </PermissionGuard>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

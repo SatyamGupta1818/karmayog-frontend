@@ -1,4 +1,5 @@
 import { ArrowRight, Loader2, Trash2 } from 'lucide-react'
+import PermissionGuard from '../../../components/common/PermissionGuard'
 
 const statusStyles = {
   PLANNING: 'bg-blue-50 text-blue-700 border-blue-100',
@@ -122,17 +123,19 @@ export default function ProjectTable({
                         >
                           <ArrowRight size={14} />
                         </button>
-                        <button
-                          type="button"
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            onDelete(project)
-                          }}
-                          className="rounded-lg p-2 text-ink-muted transition-all hover:bg-red-50 hover:text-red-600"
-                          title="Delete project"
-                        >
-                          {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                        </button>
+                        <PermissionGuard permission="project.DELETE">
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              onDelete(project)
+                            }}
+                            className="rounded-lg p-2 text-ink-muted transition-all hover:bg-red-50 hover:text-red-600"
+                            title="Delete project"
+                          >
+                            {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                          </button>
+                        </PermissionGuard>
                       </div>
                     </td>
                   </tr>
