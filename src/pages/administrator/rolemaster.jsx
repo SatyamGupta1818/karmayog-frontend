@@ -194,6 +194,7 @@ export default function RoleMaster() {
         moduleId: mod.moduleId,
         permissionIds: mod.permissions.filter((p) => p.allowed).map((p) => p.permissionId),
       })).filter((mod) => mod.permissionIds.length > 0)
+
       await roleService.assignPermissions(selectedRole.id, { modules })
       toast.success('Permissions Saved', `Permissions for "${selectedRole.name}" have been updated.`)
     } catch (err) {

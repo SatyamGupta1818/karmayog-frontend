@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSelector } from 'react-redux'
 import { Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from '../../components/common/Toast'
@@ -13,6 +14,9 @@ import projectsService from '../../apis/services/projects/projects.service'
 import departmentService from '../../apis/services/departments/department.service'
 import teamService from '../../apis/services/departments/team.service'
 import userService from '../../apis/services/users/user.service'
+import { selectCurrentUser } from '../../store/slices/authSlice'
+import usePermission from '../../hooks/usePermission'
+import PermissionGuard from '../../components/common/PermissionGuard'
 import DeleteConfirmModal from './components/DeleteConfirmModal'
 import ProjectFormModal from './components/ProjectFormModal'
 import ProjectTable from './components/ProjectTable'
@@ -84,6 +88,11 @@ const normalizeProject = (project) => {
   if (!project || typeof project !== 'object') return null
   const departmentObj = project?.department || project?.departmentObject || null
   const creator = project?.createdBy || project?.created_by || project?.createdById || project?.createdByName || null
+  const membersList = Array.isArray(project?.memberIds)
+    ? project.memberIds
+    : Array.isArray(project?.members)
+      ? project.members.map((member) => getEntityIdGeneric(member, 'userId')).filter(Boolean)
+      : []
 
   const getCreatorName = (c) => {
     if (!c || typeof c !== 'object') return typeof c === 'string' ? c : ''
@@ -106,6 +115,7 @@ const normalizeProject = (project) => {
     budgetMinutes: Number(project?.budgetMinutes || 0),
     createdAt: project?.createdAt || project?.created_at || null,
     isActive: project?.isActive !== undefined ? Boolean(project.isActive) : true,
+    memberIds: membersList,
     raw: project,
   }
 }
@@ -169,6 +179,8 @@ export default function Projects() {
   const [departments, setDepartments] = useState([])
   const [teams, setTeams] = useState([])
   const [users, setUsers] = useState([])
+  const currentUser = useSelector(selectCurrentUser)
+  const { isSuperAdmin } = usePermission()
   const navigate = useNavigate()
 
   const getErrorMessage = (error, fallback) => {
@@ -190,9 +202,16 @@ export default function Projects() {
       if (status) params.status = status
       if (departmentId) params.departmentId = departmentId
 
+      if (currentUser && !isSuperAdmin) {
+        const currentUserId = getEntityIdGeneric(currentUser, 'userId')
+        if (currentUserId) {
+          params.memberId = currentUserId
+        }
+      }
+
       const response = await projectsService.list(params)
       const rawItems = extractList(response, 'projects')
-      const normalized = rawItems
+      let normalized = rawItems
         .map(normalizeProject)
         .filter((item) => item && item.id)
 
@@ -326,14 +345,16 @@ export default function Projects() {
           <h2 className="text-2xl font-semibold text-ink">Projects</h2>
           <p className="mt-1 text-sm text-ink-muted">Create, update, and manage your project portfolio.</p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/25 active:scale-[0.98]"
-        >
-          <Plus size={16} />
-          New Project
-        </button>
+        <PermissionGuard permission="project.CREATE">
+          <button
+            type="button"
+            onClick={openCreate}
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-blue-500/20 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg hover:shadow-blue-500/25 active:scale-[0.98]"
+          >
+            <Plus size={16} />
+            New Project
+          </button>
+        </PermissionGuard>
       </div>
 
       <ProjectSummary
