@@ -70,13 +70,30 @@ function buildDynamicNav(modules) {
 function filterNavByPermission(navConfig, modules, isSuperAdmin) {
   if (isSuperAdmin) return navConfig
 
-  // Helper to check if a specific path or moduleKey is in the allowed modules
-  const hasAccess = (path, fallbackKey) => {
-    const currentPath = path.replace(/\/$/, '') || '/'
-    return modules.some((m) => {
-      const modPath = (m.path.startsWith('/') ? m.path : `/${m.path}`).replace(/\/$/, '') || '/'
-      return currentPath === modPath || m.key === fallbackKey
-    })
+  // Build a set of allowed module keys for O(1) lookup
+  const allowedKeys = new Set(
+    modules.flatMap((m) => [
+      (m.key || '').toLowerCase(),
+      (m.name || '').toLowerCase(),
+      (m.moduleKey || '').toLowerCase()
+    ]).filter(Boolean)
+  )
+
+  const hasAccess = (moduleKey) => {
+    if (!moduleKey) return false
+    
+    // Check exact match
+    if (allowedKeys.has(moduleKey.toLowerCase())) return true
+
+    // Fallback: Check if moduleKey starts with or matches plural/singular variants
+    // e.g. "projects" matches "project" in allowedKeys
+    for (const key of allowedKeys) {
+      if (moduleKey.toLowerCase().startsWith(key) || key.startsWith(moduleKey.toLowerCase())) {
+        return true
+      }
+    }
+    
+    return false
   }
 
   return navConfig
@@ -94,7 +111,7 @@ function filterNavByPermission(navConfig, modules, isSuperAdmin) {
               if (child.superAdminOnly) return false
 
               const childKey = child.moduleKey || child.path.replace(/^\//, '').split('/').pop()
-              return hasAccess(child.path, childKey)
+              return hasAccess(childKey)
             })
 
             // Keep parent if it has accessible children
@@ -105,7 +122,7 @@ function filterNavByPermission(navConfig, modules, isSuperAdmin) {
           }
 
           // Leaf item — check access
-          return hasAccess(item.path, itemKey) ? item : null
+          return hasAccess(itemKey) ? item : null
         })
         .filter(Boolean)
 

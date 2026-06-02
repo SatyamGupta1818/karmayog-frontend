@@ -69,11 +69,13 @@ export const navigationConfig = [
         path: '/users',
         icon: 'Users',
         badge: 'NEW',
+        moduleKey: 'users',
       },
       {
         name: 'Departments',
         path: '/departments',
         icon: 'Building2',
+        moduleKey: 'departments',
       },
     ],
   },
@@ -94,10 +96,10 @@ export const navigationConfig = [
         icon: 'FolderKanban',
         // Children create a collapsible nested menu
         children: [
-          { name: 'Role Master', path: '/administrator/role-master', icon: 'Zap' },
-          { name: 'Menu Master', path: '/administrator/menu-master', icon: 'Zap' },
-          { name: 'Permission Master', path: '/administrator/permission-master', icon: 'Key' },
-          { name: 'Settings', path: '/administrator/settings', icon: 'Settings' },
+          { name: 'Role Master', path: '/administrator/role-master', icon: 'Zap', moduleKey: 'role-master' },
+          { name: 'Menu Master', path: '/administrator/menu-master', icon: 'Zap', moduleKey: 'menu-master' },
+          { name: 'Permission Master', path: '/administrator/permission-master', icon: 'Key', moduleKey: 'permission-master' },
+          { name: 'Settings', path: '/administrator/settings', icon: 'Settings', moduleKey: 'administrator' },
         ],
       },
     ],
