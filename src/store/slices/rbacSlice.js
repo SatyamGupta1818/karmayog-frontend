@@ -47,6 +47,7 @@ function buildPermissionMap(modules) {
       mod.permissions.forEach((p) => {
         if (p.key) permSet.add(p.key.toUpperCase())
         if (p.name) permSet.add(p.name.toUpperCase())
+        if (p.permissionKey) permSet.add(p.permissionKey.toUpperCase())
       })
     }
 
@@ -54,6 +55,7 @@ function buildPermissionMap(modules) {
 
     if (mod.key) map[mod.key.toLowerCase()] = permsArray
     if (mod.name) map[mod.name.toLowerCase()] = permsArray
+    if (mod.moduleKey) map[mod.moduleKey.toLowerCase()] = permsArray
   })
 
   return map

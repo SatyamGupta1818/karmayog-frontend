@@ -51,7 +51,18 @@ export default function usePermission() {
       const moduleKey = permString.substring(0, dotIndex).toLowerCase()
       const action = permString.substring(dotIndex + 1).toUpperCase()
 
-      const modulePermissions = permissionMap[moduleKey]
+      let modulePermissions = permissionMap[moduleKey]
+      
+      // Fallback for singular/plural mismatches (e.g. 'projects' vs 'project')
+      if (!modulePermissions) {
+        const matchingKey = Object.keys(permissionMap).find(
+          (k) => moduleKey.startsWith(k) || k.startsWith(moduleKey)
+        )
+        if (matchingKey) {
+          modulePermissions = permissionMap[matchingKey]
+        }
+      }
+
       if (!modulePermissions) return false
 
       return modulePermissions.includes(action)
@@ -68,7 +79,19 @@ export default function usePermission() {
     (moduleKey) => {
       if (isSuperAdmin) return true
       if (!moduleKey) return false
-      const perms = permissionMap[moduleKey.toLowerCase()]
+      const searchKey = moduleKey.toLowerCase()
+      let perms = permissionMap[searchKey]
+
+      // Fallback for singular/plural mismatches (e.g. 'projects' vs 'project')
+      if (!perms) {
+        const matchingKey = Object.keys(permissionMap).find(
+          (k) => searchKey.startsWith(k) || k.startsWith(searchKey)
+        )
+        if (matchingKey) {
+          perms = permissionMap[matchingKey]
+        }
+      }
+
       return Array.isArray(perms) && perms.length > 0
     },
     [permissionMap, isSuperAdmin]

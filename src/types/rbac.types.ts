@@ -141,8 +141,8 @@ export interface RolePermissionItem {
 }
 
 export interface AssignPermissionPayload {
-  permissions: {
-    modulePermissionId: string;
-    allowed: boolean;
+  modules: {
+    moduleId: string;
+    permissionIds: string[];
   }[];
 }

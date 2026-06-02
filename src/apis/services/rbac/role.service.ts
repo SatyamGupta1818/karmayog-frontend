@@ -74,7 +74,7 @@ const roleService = {
     /**
      * Assign permissions to a role.
      * @param {string} roleId
-     * @param {Object} payload - { permissions: [{ modulePermissionId, allowed }] }
+     * @param {Object} payload - { modules: [{ moduleId, permissionIds: string[] }] }
      */
     async assignPermissions(roleId, payload) {
         const { data } = await client.put(
