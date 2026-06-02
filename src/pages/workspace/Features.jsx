@@ -7,6 +7,7 @@ import userService from '../../apis/services/users/user.service'
 import featuresService from '../../apis/services/workspace/features.service'
 import FeatureFormModal from './components/FeatureFormModal'
 import CommentsPanel from './components/CommentsPanel'
+import PermissionGuard from '../../components/common/PermissionGuard'
 import {
   Badge,
   ConfirmModal,
@@ -159,6 +160,7 @@ export default function Features() {
         actionLabel="New Feature"
         actionIcon="Flag"
         onAction={() => setEditor({ open: true, mode: 'create', feature: null })}
+        actionPermission="features.CREATE"
       />
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -250,28 +252,32 @@ export default function Features() {
                       >
                         <MessageSquare size={15} />
                       </button>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          setEditor({ open: true, mode: 'edit', feature })
-                        }}
-                        className="rounded-lg p-2 text-ink-muted transition hover:bg-blue-50 hover:text-blue-600"
-                        title="Edit feature"
-                      >
-                        <Edit3 size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          setDeleteTarget(feature)
-                        }}
-                        className="rounded-lg p-2 text-ink-muted transition hover:bg-red-50 hover:text-red-600"
-                        title="Delete feature"
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                      <PermissionGuard permission="features.UPDATE">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setEditor({ open: true, mode: 'edit', feature })
+                          }}
+                          className="rounded-lg p-2 text-ink-muted transition hover:bg-blue-50 hover:text-blue-600"
+                          title="Edit feature"
+                        >
+                          <Edit3 size={15} />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permission="features.DELETE">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            setDeleteTarget(feature)
+                          }}
+                          className="rounded-lg p-2 text-ink-muted transition hover:bg-red-50 hover:text-red-600"
+                          title="Delete feature"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </PermissionGuard>
                     </div>
                   </td>
                 </tr>
