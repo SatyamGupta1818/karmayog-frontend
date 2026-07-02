@@ -70,25 +70,39 @@ function buildDynamicNav(modules) {
 function filterNavByPermission(navConfig, modules, isSuperAdmin) {
   if (isSuperAdmin) return navConfig
 
+  const normalizeKey = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  const getPathKey = (path) => String(path || '').split('/').filter(Boolean).pop() || ''
+
   // Build a set of allowed module keys for O(1) lookup
   const allowedKeys = new Set(
     modules.flatMap((m) => [
       (m.key || '').toLowerCase(),
       (m.name || '').toLowerCase(),
-      (m.moduleKey || '').toLowerCase()
+      (m.moduleKey || '').toLowerCase(),
+      (m.path || '').toLowerCase(),
+      getPathKey(m.path).toLowerCase(),
     ]).filter(Boolean)
   )
 
   const hasAccess = (moduleKey) => {
     if (!moduleKey) return false
+    const normalizedModuleKey = normalizeKey(moduleKey)
     
     // Check exact match
     if (allowedKeys.has(moduleKey.toLowerCase())) return true
 
     // Fallback: Check if moduleKey starts with or matches plural/singular variants
-    // e.g. "projects" matches "project" in allowedKeys
+    // e.g. "projects" matches "project", and "work-timesheet" matches "timesheet".
     for (const key of allowedKeys) {
-      if (moduleKey.toLowerCase().startsWith(key) || key.startsWith(moduleKey.toLowerCase())) {
+      const normalizedAllowedKey = normalizeKey(key)
+      if (
+        moduleKey.toLowerCase().startsWith(key)
+        || key.startsWith(moduleKey.toLowerCase())
+        || normalizedModuleKey.startsWith(normalizedAllowedKey)
+        || normalizedAllowedKey.startsWith(normalizedModuleKey)
+        || normalizedModuleKey.endsWith(normalizedAllowedKey)
+        || normalizedAllowedKey.endsWith(normalizedModuleKey)
+      ) {
         return true
       }
     }
@@ -107,12 +121,12 @@ function filterNavByPermission(navConfig, modules, isSuperAdmin) {
 
           // If item has children, filter children first
           if (item.children && item.children.length > 0) {
-            const filteredChildren = item.children.filter((child) => {
-              if (child.superAdminOnly) return false
+          const filteredChildren = item.children.filter((child) => {
+            if (child.superAdminOnly) return false
 
-              const childKey = child.moduleKey || child.path.replace(/^\//, '').split('/').pop()
-              return hasAccess(childKey)
-            })
+            const childKey = child.moduleKey || child.path.replace(/^\//, '').split('/').pop()
+            return hasAccess(childKey) || hasAccess(child.path)
+          })
 
             // Keep parent if it has accessible children
             if (filteredChildren.length > 0) {
@@ -122,7 +136,7 @@ function filterNavByPermission(navConfig, modules, isSuperAdmin) {
           }
 
           // Leaf item — check access
-          return hasAccess(itemKey) ? item : null
+          return hasAccess(itemKey) || hasAccess(item.path) ? item : null
         })
         .filter(Boolean)
 

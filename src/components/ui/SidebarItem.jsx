@@ -99,7 +99,7 @@ export default function SidebarItem({ item, collapsed }) {
         <div
           className={`
             overflow-hidden transition-all duration-200 ease-in-out
-            ${isMenuOpen && !collapsed ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0'}
+            ${isMenuOpen && !collapsed ? 'max-h-[640px] opacity-100' : 'max-h-0 opacity-0'}
           `}
         >
           <div className="ml-4 pl-3 border-l border-white/10 mt-1 space-y-0.5 mb-1">
