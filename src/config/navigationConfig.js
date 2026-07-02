@@ -54,7 +54,7 @@ export const navigationConfig = [
           { name: 'Issues', path: '/workspace/issues', icon: 'Bug', moduleKey: 'issues' },
           { name: 'Comments', path: '/workspace/comments', icon: 'MessageSquare', moduleKey: 'comments' },
           { name: 'Kanban Board', path: '/workspace/kanban', icon: 'Columns3', moduleKey: 'kanban' },
-          { name: 'Work Timesheet', path: '/workspace/work-timesheet', icon: 'Timer', moduleKey: 'work-timesheet' },
+          { name: 'Work Timesheet', path: '/workspace/timesheet', icon: 'Timer', moduleKey: 'work-timesheet' },
         ],
       },
     ],
