@@ -29,11 +29,12 @@ import {
 
 const DEFAULT_EDITOR = { open: false, mode: 'create', task: null }
 
-function KanbanTaskCard({ task, onEdit, onDragStart }) {
+function KanbanTaskCard({ task, onEdit, onDragStart, onDragEnd }) {
   return (
     <article
       draggable
       onDragStart={(event) => onDragStart(event, task)}
+      onDragEnd={(event) => onDragEnd && onDragEnd(event, task)}
       className="rounded-xl border border-surface-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-card"
     >
       <div className="flex items-start justify-between gap-3">
@@ -147,6 +148,21 @@ export default function KanbanBoard() {
   const handleDragStart = (event, task) => {
     event.dataTransfer.setData('text/plain', task.id)
     event.dataTransfer.effectAllowed = 'move'
+    setMovingTaskId(task.id)
+  }
+
+  const handleDragEnd = () => {
+    setMovingTaskId('')
+  }
+
+  const handleDragOver = (event) => {
+    event.preventDefault()
+    try {
+      // ensure cursor shows move and drop is allowed
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+    } catch (e) {
+      // some browsers may throw when accessing dataTransfer during dragover
+    }
   }
 
   const handleDrop = async (event, nextStatus) => {
@@ -238,7 +254,8 @@ export default function KanbanBoard() {
             return (
               <section
                 key={column.value}
-                onDragOver={(event) => event.preventDefault()}
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragOver}
                 onDrop={(event) => handleDrop(event, column.value)}
                 className="flex max-h-[calc(100vh-22rem)] min-h-[32rem] flex-col rounded-xl border border-surface-200 bg-surface-100/70"
               >
@@ -266,6 +283,7 @@ export default function KanbanBoard() {
                           task={task}
                           onEdit={(selectedTask) => setEditor({ open: true, mode: 'edit', task: selectedTask })}
                           onDragStart={handleDragStart}
+                          onDragEnd={handleDragEnd}
                         />
                       </div>
                     ))
