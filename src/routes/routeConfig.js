@@ -89,6 +89,7 @@ export const routeConfig = [
       },
       { path: 'comments', element: Comments, moduleKey: 'comments' },
       { path: 'kanban', element: KanbanBoard, moduleKey: 'kanban' },
+      { path: 'timesheet', element: WorkTimesheet, moduleKey: 'work-timesheet' },
       { path: 'work-timesheet', element: WorkTimesheet, moduleKey: 'work-timesheet' },
     ],
   },
