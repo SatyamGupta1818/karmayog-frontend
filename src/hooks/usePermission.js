@@ -33,7 +33,13 @@ export default function usePermission() {
   const allowedPaths = useSelector(selectAllowedPaths)
   const rbacStatus = useSelector(selectRbacStatus)
 
-  const isSuperAdmin = role?.name === 'SUPER_ADMIN'
+  const normalizeKey = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  const isSuperAdmin = [
+    role?.name,
+    role?.key,
+    role?.role,
+    role?.slug,
+  ].some((value) => normalizeKey(value) === 'superadmin')
 
   /**
    * Check if the user has a specific permission.
@@ -55,8 +61,17 @@ export default function usePermission() {
       
       // Fallback for singular/plural mismatches (e.g. 'projects' vs 'project')
       if (!modulePermissions) {
+        const normalizedModuleKey = normalizeKey(moduleKey)
         const matchingKey = Object.keys(permissionMap).find(
-          (k) => moduleKey.startsWith(k) || k.startsWith(moduleKey)
+          (k) => {
+            const normalizedKey = normalizeKey(k)
+            return moduleKey.startsWith(k)
+              || k.startsWith(moduleKey)
+              || normalizedModuleKey.startsWith(normalizedKey)
+              || normalizedKey.startsWith(normalizedModuleKey)
+              || normalizedModuleKey.endsWith(normalizedKey)
+              || normalizedKey.endsWith(normalizedModuleKey)
+          }
         )
         if (matchingKey) {
           modulePermissions = permissionMap[matchingKey]
@@ -81,11 +96,22 @@ export default function usePermission() {
       if (!moduleKey) return false
       const searchKey = moduleKey.toLowerCase()
       let perms = permissionMap[searchKey]
+      const pathKey = searchKey.split('/').filter(Boolean).pop()
 
       // Fallback for singular/plural mismatches (e.g. 'projects' vs 'project')
       if (!perms) {
+        const normalizedSearchKey = normalizeKey(searchKey)
         const matchingKey = Object.keys(permissionMap).find(
-          (k) => searchKey.startsWith(k) || k.startsWith(searchKey)
+          (k) => {
+            const normalizedKey = normalizeKey(k)
+            return searchKey.startsWith(k)
+              || k.startsWith(searchKey)
+              || normalizedSearchKey.startsWith(normalizedKey)
+              || normalizedKey.startsWith(normalizedSearchKey)
+              || normalizedSearchKey.endsWith(normalizedKey)
+              || normalizedKey.endsWith(normalizedSearchKey)
+              || (pathKey && normalizeKey(pathKey) === normalizedKey)
+          }
         )
         if (matchingKey) {
           perms = permissionMap[matchingKey]
@@ -107,7 +133,10 @@ export default function usePermission() {
       if (isSuperAdmin) return true
       if (!path) return false
       return allowedPaths.some(
-        (allowed) => path === allowed || path.startsWith(allowed + '/')
+        (allowed) => path === allowed
+          || path.startsWith(allowed + '/')
+          || normalizeKey(path).endsWith(normalizeKey(allowed))
+          || normalizeKey(allowed).endsWith(normalizeKey(path))
       )
     },
     [allowedPaths, isSuperAdmin]

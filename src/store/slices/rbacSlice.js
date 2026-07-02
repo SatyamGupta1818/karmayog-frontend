@@ -39,6 +39,7 @@ export const fetchPermissions = createAsyncThunk(
 function buildPermissionMap(modules) {
   const map = {}
   if (!modules || !Array.isArray(modules)) return map
+  const getPathKey = (path) => String(path || '').split('/').filter(Boolean).pop() || ''
 
   modules.forEach((mod) => {
     const permSet = new Set()
@@ -56,6 +57,8 @@ function buildPermissionMap(modules) {
     if (mod.key) map[mod.key.toLowerCase()] = permsArray
     if (mod.name) map[mod.name.toLowerCase()] = permsArray
     if (mod.moduleKey) map[mod.moduleKey.toLowerCase()] = permsArray
+    if (mod.path) map[mod.path.toLowerCase()] = permsArray
+    if (getPathKey(mod.path)) map[getPathKey(mod.path).toLowerCase()] = permsArray
   })
 
   return map
@@ -64,6 +67,11 @@ function buildPermissionMap(modules) {
 function buildAllowedPaths(modules) {
   if (!modules || !Array.isArray(modules)) return []
   return modules.map((mod) => mod.path).filter(Boolean)
+}
+
+function isSuperAdminRole(role) {
+  const normalize = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  return [role?.name, role?.key, role?.role, role?.slug].some((value) => normalize(value) === 'superadmin')
 }
 
 // ─── Slice ────────────────────────────────────────────────────────────────────
@@ -137,6 +145,6 @@ export const selectPermissionMap = (state) => state.rbac.permissionMap
 export const selectAllowedPaths = (state) => state.rbac.allowedPaths
 export const selectRbacStatus = (state) => state.rbac.status
 export const selectRbacError = (state) => state.rbac.error
-export const selectIsSuperAdmin = (state) => state.rbac.role?.name === 'SUPER_ADMIN'
+export const selectIsSuperAdmin = (state) => isSuperAdminRole(state.rbac.role)
 
 export default rbacSlice.reducer
