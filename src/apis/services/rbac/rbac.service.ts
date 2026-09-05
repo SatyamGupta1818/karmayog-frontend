@@ -14,8 +14,8 @@ const rbacService = {
      * Returns { role: {...}, modules: [...] }
      */
     async fetchPermissionManifest() {
-        const { data } = await client.get(API_URLS.rbac.myPermissions);
-        return data;
+        const { data: response } = await client.get(API_URLS.rbac.myPermissions);
+        return response?.data ?? response;
     },
 };
 

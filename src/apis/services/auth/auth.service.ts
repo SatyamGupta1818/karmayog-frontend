@@ -66,6 +66,10 @@ export interface LoginResponse extends TokensResponse {
     user: UserProfile;
 }
 
+interface ApiResponse<T> {
+    data: T;
+}
+
 export interface RegisterOrgResponse {
     message: string;
     data: {
@@ -109,10 +113,11 @@ const authService = {
     },
 
     async verifyOtp(payload: VerifyOtpPayload): Promise<LoginResponse> {
-        const { data } = await client.post<LoginResponse>(
+        const { data: response } = await client.post<LoginResponse | ApiResponse<LoginResponse>>(
             API_URLS.auth.verifyOtp,
             payload,
         );
+        const data = 'data' in response ? response.data : response;
 
         tokenStorage.setTokens(data.accessToken, data.refreshToken);
         tokenStorage.setUser(JSON.stringify(data.user));
@@ -167,8 +172,10 @@ const authService = {
     },
 
     async getProfile(): Promise<UserProfile> {
-        const { data } = await client.get<UserProfile>(API_URLS.auth.me);
-        return data;
+        const { data: response } = await client.get<UserProfile | ApiResponse<UserProfile>>(
+            API_URLS.auth.me,
+        );
+        return 'data' in response ? response.data : response;
     },
 
     async registerOrganization(

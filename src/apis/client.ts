@@ -23,6 +23,14 @@ export const tokenStorage = {
         localStorage.setItem(TOKEN_KEYS.access, a);
         localStorage.setItem(TOKEN_KEYS.refresh, r);
     },
+    getUser: () => {
+        try {
+            const user = localStorage.getItem('users');
+            return user ? JSON.parse(user) : null;
+        } catch {
+            return null;
+        }
+    },
     clearAll: () => {
         localStorage.removeItem(TOKEN_KEYS.access);
         localStorage.removeItem(TOKEN_KEYS.refresh);

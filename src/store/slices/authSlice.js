@@ -11,9 +11,10 @@ function readStoredToken(getter) {
 
 const accessToken = readStoredToken(tokenStorage.getAccess)
 const refreshToken = readStoredToken(tokenStorage.getRefresh)
+const user = readStoredToken(tokenStorage.getUser)
 
 const initialState = {
-  user: null,
+  user,
   accessToken,
   refreshToken,
   isAuthenticated: Boolean(accessToken),
